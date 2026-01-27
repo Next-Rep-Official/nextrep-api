@@ -2,15 +2,19 @@
   "name": "nextrep-backend",
   "version": "1.0.0",
   "description": "backend api interface for the nextrep fitness forum and community",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node api/app.js",
+    "dev": "nodemon api/app.js"
   },
   "author": "Zane Beidas",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "express": "^5.2.1"
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "pg": "^8.17.2"
   }
 }
