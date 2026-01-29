@@ -1,3 +1,6 @@
+// First created Week 1 by Zane Beidas
+// --------
+
 import fs from 'fs/promises';
 import path, { parse } from 'path';
 import pool from '../database/db.js';

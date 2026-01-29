@@ -1,3 +1,6 @@
+// First created Week 1 by Zane Beidas
+// --------
+
 import pkg from 'pg';
 
 // Environemt variables

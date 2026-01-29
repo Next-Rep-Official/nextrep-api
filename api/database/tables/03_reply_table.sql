@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS public.replies(
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    author_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_id INT REFERENCES replies(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    likes INT NOT NULL DEFAULT 0,
+    replies_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+)
