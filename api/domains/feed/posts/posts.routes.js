@@ -10,7 +10,7 @@ const router = Router();
 
 router.post('/post', requireAuth, async (req, res) => {
     try {
-         const { id } = req.user;
+        const { id } = req.user;
 
         const response = await createPost({ author_id: id, title: req.body.title, body: req.body.body });
 
