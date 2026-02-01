@@ -3,7 +3,7 @@
 
 import fs from 'fs/promises';
 import path, { parse } from 'path';
-import pool from '../database/db.js';
+import pool from '../db.js';
 
 export async function parseFile(name) {
     try {

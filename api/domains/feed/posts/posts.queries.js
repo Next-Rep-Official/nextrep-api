@@ -10,7 +10,7 @@ import pool from '../../../database/db.js';
  * @param {string} title The title of the post
  * @param {string} body The body of the post
  */
-export async function createNewPost(user_id, title, {body = ''} = {}) {
+export async function createNewPost(user_id, title, { body = '' } = {}) {
     const { rows } = await pool.query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [user_id, title, body ?? '']);
 
     return rows[0];
@@ -22,7 +22,7 @@ export async function createNewPost(user_id, title, {body = ''} = {}) {
  * @param {number} user_id
  * @param {number} post_id
  */
-export async function getPostById(post_id, {user_id = -1} = {}) {
+export async function getPostById(post_id, { user_id = -1 } = {}) {
     // TODO: IMPLEMETN FRIENDS LOGIC
     const { rows } = await pool.query("SELECT * FROM posts WHERE id = $1 AND (visibility = 'public' OR author_id = $2) LIMIT 1", [post_id, user_id ?? -1]);
 
@@ -44,13 +44,13 @@ export async function getPostById(post_id, {user_id = -1} = {}) {
  *
  * @returns {Array} Array of post objects
  */
-export async function getPostsBySearchTerm(search_term, {user_id = -1, limit = 20} = {}) {
+export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 20 } = {}) {
     // Convert search term to tsquery
     const tsQuery = search_term
-    .trim()
-    .replace(/[^\w\s]/g, '')
-    .split(/\s+/)
-    .join(' & ');
+        .trim()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .join(' & ');
 
     const query = `
         SELECT *,

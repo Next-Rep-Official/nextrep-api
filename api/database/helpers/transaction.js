@@ -1,12 +1,12 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import pool from '../../../database/db.js';
+import pool from '../db.js';
 
 /**
  * Runs multiple queries inside a transaction
- * 
- * @param {function(client: import('pg').PoolClient): Promise<any>} callback 
+ *
+ * @param {function(client: import('pg').PoolClient): Promise<any>} callback
  *        A function that takes a client and performs queries
  *
  * @returns {Promise<any>} The result of the callback

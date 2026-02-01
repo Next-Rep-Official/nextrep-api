@@ -7,7 +7,7 @@ import cors from 'cors';
 import user from './domains/user/user.js';
 import feed from './domains/feed/feed.js';
 
-import { initTables } from './util/database.js';
+import { initTables } from './database/helpers/tables.js';
 
 // -------- CREATE APP -------- //
 const app = express();
@@ -17,8 +17,10 @@ const app = express();
 // Initilize server
 app.use(express.json());
 app.use(cors());
+
 // Add Tables
-await initTables().then(() => console.log('Tables initialized successfully ✅'))
+await initTables().then(() => console.log('Tables initialized successfully ✅'));
+
 // Add Routers
 app.use('/user', user);
 app.use('/feed', feed);

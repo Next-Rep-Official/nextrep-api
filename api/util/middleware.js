@@ -46,7 +46,7 @@ export function acceptAuth(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return next()
+        return next();
     }
 
     const token = authHeader.split(' ')[1];

@@ -12,7 +12,7 @@ import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder } fro
  *
  * @returns Status and body of response
  */
-export async function createPost({ author_id, title, body = "" }) {
+export async function createPost({ author_id, title, body = '' }) {
     // Initial checks
     if (!author_id || !title) return { status: 400, body: { message: 'Please input a author_id and title' } };
 
@@ -127,7 +127,7 @@ export async function getPosts({ user_id, order, limit = 20 }) {
     }
 
     try {
-        const result = await getPostsByOrder(order, { user_id, limit }); 
+        const result = await getPostsByOrder(order, { user_id, limit });
 
         if (!result || result.length === 0) {
             return { status: 404, body: { message: 'No posts found' } };

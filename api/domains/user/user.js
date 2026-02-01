@@ -1,3 +1,6 @@
+// First created Week 1 by Zane Beidas
+// --------
+
 import express from 'express';
 
 import authRouter from './auth/auth.routes.js';
