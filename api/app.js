@@ -6,6 +6,7 @@ import cors from 'cors';
 
 import user from './domains/user/user.js';
 import feed from './domains/feed/feed.js';
+import assets from './domains/misc/assets/assets.routes.js';
 
 import { initTables } from './database/helpers/tables.js';
 
@@ -24,6 +25,7 @@ await initTables().then(() => console.log('Tables initialized successfully ✅')
 // Add Routers
 app.use('/user', user);
 app.use('/feed', feed);
+app.use('/assets', assets);
 
 // -------- START SERVER -------- //
 app.listen(3000, () => {

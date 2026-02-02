@@ -174,3 +174,26 @@ export async function login({ key, password }) {
         return { status: 500, body: { message: 'Internal server error' } };
     }
 }
+
+
+export async function getUser(id, {user_id = -1} = {}) {
+    if (typeof id != 'number') {
+        return { status: 400, body: { message: 'ID must be a number value' } };
+    }
+
+    try {
+        const user = await getUserById(id);
+
+        if (user.visibility === 'private' && user.id !== user_id) {
+            return { status: 403, body: { message: 'You are not the owner of this user' } };
+        }
+
+        return { status: 200, body: { message: 'User retrieved successfully!', data: user } };
+    } catch (err) {
+        if (err.code === 1) {
+            return { status: 404, body: { message: 'User not found' } };
+        }
+
+        return { status: 500, body: { message: 'Internal server error' } };
+    }
+}

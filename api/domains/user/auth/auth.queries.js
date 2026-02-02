@@ -31,3 +31,20 @@ export async function getUserFromKey(key) {
 
     return rows[0];
 }
+
+/**
+ * Gets a user by its id
+ * @param {*} id 
+ * @param {*} param1 
+ * @returns 
+ */
+export async function getUserById(id, {user_id = -1} = {}) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1 AND (visibility = \'public\' OR id = $2) LIMIT 1', [id, user_id ?? -1]);
+
+    if (rows.length === 0) {
+        const error = new Error('User not found or not accessible');
+        error.code = 1;
+        throw error;
+    }
+    return rows[0];
+}

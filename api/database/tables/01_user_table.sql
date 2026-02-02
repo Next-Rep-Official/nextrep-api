@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     email TEXT NOT NULL UNIQUE CHECK (email = LOWER(email)),
     hashed_password TEXT NOT NULL,
     account_type TEXT NOT NULL CHECK (account_type = ANY (ARRAY['user', 'admin'])) DEFAULT 'user',
+    visibility TEXT NOT NULL CHECK (visibility = ANY (ARRAY['private', 'public'])) DEFAULT 'private',
     verified BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

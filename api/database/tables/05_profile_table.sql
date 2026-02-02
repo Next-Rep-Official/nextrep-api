@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS public.profiles(
     id SERIAL PRIMARY KEY,
-    user_id REFERENCES users(id) UNIQUE NOT NULL,
-    profile_picture REFERENCES assets(id) DEFAULT NULL,
-    pronouns NOT NULL CHECK(pronouns = ANY (ARRAY['h', 's', 'o', 'n'])) DEFAULT 'n',
+    user_id INT REFERENCES users(id) UNIQUE NOT NULL,
+    profile_picture INT REFERENCES assets(id) DEFAULT NULL,
+    pronouns TEXT NOT NULL CHECK(pronouns = ANY (ARRAY['h', 's', 'o', 'n'])) DEFAULT 'n',
     bio TEXT DEFAULT NULL, 
     posts_created INT NOT NULL DEFAULT 0,
     total_likes INT NOT NULL DEFAULT 0

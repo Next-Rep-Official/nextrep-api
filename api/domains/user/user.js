@@ -2,10 +2,10 @@
 // --------
 
 import express from 'express';
-
+import { Router } from 'express';
 import authRouter from './auth/auth.routes.js';
 
-const router = express();
+const router = Router();
 
 router.use('/auth', authRouter);
 
