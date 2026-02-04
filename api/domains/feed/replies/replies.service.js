@@ -1,7 +1,7 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import { validateType } from '../../../util/functions.js';
+import { validateType } from '../../../util/validation.js';
 import { addReplyToPost, addReplyToReply, getAllRepliesFromPost, getAllRepliesFromReply } from './replies.queries.js';
 
 /**

@@ -29,6 +29,7 @@ export async function addAssetQuery(file, owner_id, owner_type, type) {
         if (filename) {
             await removeFile(path, filename);
         }
+        
         throw error;
     }
 }

@@ -2,7 +2,7 @@
 // --------
 
 import {  getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery } from './profile.queries.js';
-import { validateType } from '../../../util/functions.js';
+import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 
 /**

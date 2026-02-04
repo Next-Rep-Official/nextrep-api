@@ -6,13 +6,12 @@ import pool from '../db.js';
 /**
  * Runs multiple queries inside a transaction
  *
- * @param {function(client: import('pg').PoolClient): Promise<any>} callback
- *        A function that takes a client and performs queries
+ * @param {function(client: import('pg').PoolClient): Promise<any>} callback A function that takes a client and performs queries
  *
  * @returns {Promise<any>} The result of the callback
  */
-export async function runTransaction(callback) {
-    const client = await pool.connect(); // get a client from the pool
+export async function runTransaction(callback, { client = pool } = {}) {
+    const client = await (client ?? pool).connect(); // get a client from the pool
     try {
         await client.query('BEGIN'); // start transaction
         const result = await callback(client); // run user queries

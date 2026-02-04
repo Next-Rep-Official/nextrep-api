@@ -1,6 +1,8 @@
 // First created Week 2 by Zane Beidas
 // --------
 
+import { ValidationError } from './backendErrors.js';
+
 /**
  * Checks if a type is what is expected
  *
@@ -11,6 +13,6 @@
  */
 export function validateType(value, type, name = 'Value') {
     if (typeof value != type) {
-        throw new Error(name + ' must be of type ' + type);
+        throw new ValidationError(name + ' must be of type ' + type);
     }
 }

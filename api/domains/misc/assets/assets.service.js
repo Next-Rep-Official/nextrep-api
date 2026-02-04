@@ -2,7 +2,7 @@
 // --------
 
 import { addAssetQuery, removeAssetQuery, getAssetQuery } from './assets.queries.js';
-import { validateType } from '../../../util/functions.js';
+import { validateType } from '../../../util/validation.js';
 import { getPostById } from '../../feed/posts/posts.queries.js';
 import { getUserById } from '../../user/auth/auth.queries.js';
 import { getSignedUrl } from '../../../bucket/helpers/load.js';
