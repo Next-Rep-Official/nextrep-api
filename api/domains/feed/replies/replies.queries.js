@@ -17,7 +17,10 @@ import { runTransaction } from '../../../database/helpers/transaction.js';
  */
 export async function addReplyToPost(user_id, post_id, body) {
     const result = await runTransaction(async (client) => {
-        const { rows } = await client.query('INSERT INTO replies(author_id, post_id, body) VALUES ($1, $2, $3) RETURNING *', [user_id, post_id, body]);
+        const { rows } = await client.query(
+            'INSERT INTO replies(author_id, post_id, body) VALUES ($1, $2, $3) RETURNING *',
+            [user_id, post_id, body]
+        );
 
         await client.query(`UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1`, [post_id]);
 
@@ -46,12 +49,10 @@ export async function addReplyToReply(user_id, reply_id, body) {
 
         const post_id = reply_rows[0].post_id;
 
-        const { rows } = await client.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [
-            user_id,
-            post_id,
-            body,
-            reply_id,
-        ]);
+        const { rows } = await client.query(
+            'INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *',
+            [user_id, post_id, body, reply_id]
+        );
 
         // await client.query("UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1", [post_id])
         await client.query('UPDATE replies SET replies_count = replies_count + 1 WHERE id = $1', [reply_id]);

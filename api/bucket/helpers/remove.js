@@ -6,7 +6,7 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 /**
  * Removes a file from the S3 bucket
- * 
+ *
  * @param {string} path the path to the file
  * @param {string} filename the filename of the file
  */
@@ -21,7 +21,7 @@ export async function removeFile(path, filename) {
 
 /**
  * Removes multiple files from the S3 bucket
- * 
+ *
  * @param {string} path the path to the files
  * @param {string[]} filenames the filenames of the files
  */

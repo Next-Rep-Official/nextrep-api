@@ -8,7 +8,7 @@ import { runTransaction } from '../../../database/helpers/transaction.js';
 
 /**
  * Creates a new asset inside the Assets bucket
- * 
+ *
  * @param {File} file the file to upload
  * @param {number} owner_id the ID of the owner
  * @param {string} owner_type the type of the owner
@@ -20,7 +20,10 @@ export async function addAssetQuery(file, owner_id, owner_type, type) {
 
     try {
         filename = await uploadFile(file, path);
-        const { rows } = await pool.query('INSERT INTO assets (owner_id, owner_type, type, filename) VALUES ($1, $2, $3, $4) RETURNING *', [owner_id, owner_type, type, filename]);
+        const { rows } = await pool.query(
+            'INSERT INTO assets (owner_id, owner_type, type, filename) VALUES ($1, $2, $3, $4) RETURNING *',
+            [owner_id, owner_type, type, filename]
+        );
         return rows[0];
     } catch (error) {
         if (filename) {
@@ -32,7 +35,7 @@ export async function addAssetQuery(file, owner_id, owner_type, type) {
 
 /**
  * Removes an asset from the database and the S3 bucket
- * 
+ *
  * @param {number} id the ID of the asset to remove
  */
 export async function removeAssetQuery(id) {

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS public.profiles(
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) UNIQUE NOT NULL,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+    display_name TEXT NOT NULL DEFAULT '',
     profile_picture INT REFERENCES assets(id) DEFAULT NULL,
     pronouns TEXT NOT NULL CHECK(pronouns = ANY (ARRAY['h', 's', 'o', 'n'])) DEFAULT 'n',
     bio TEXT DEFAULT NULL, 

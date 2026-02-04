@@ -4,7 +4,7 @@
 import express, { Router } from 'express';
 
 import postRouter from './posts/posts.routes.js';
-import replyRouter from './replies/replies.routes.js'
+import replyRouter from './replies/replies.routes.js';
 
 const router = Router();
 
@@ -12,4 +12,3 @@ router.use('/posts', postRouter);
 router.use('/replies', replyRouter);
 
 export default router;
- 

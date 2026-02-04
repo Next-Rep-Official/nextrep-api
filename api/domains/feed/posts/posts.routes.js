@@ -51,28 +51,28 @@ router.get('/post', acceptAuth, async (req, res) => {
 
 // ======== REPLIES ========
 
-router.post("/:post_id/reply", requireAuth, async (req, res) => {
+router.post('/:post_id/reply', requireAuth, async (req, res) => {
     const post_id = Number(req.params.post_id);
     const { body } = req.body;
 
-    if (!body) return res.status(400).json({ message: "Body is required" });
+    if (!body) return res.status(400).json({ message: 'Body is required' });
 
     try {
         const response = await replyToPost({ user_id: req.user.id, post_id, body });
         res.status(response.status).json(response.body);
     } catch (err) {
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-router.get("/:post_id/reply", async (req, res) => {
+router.get('/:post_id/reply', async (req, res) => {
     const post_id = Number(req.params.post_id);
 
     try {
         const response = await getRepliesFromPost({ post_id });
         res.status(response.status).json(response.body);
     } catch (err) {
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 

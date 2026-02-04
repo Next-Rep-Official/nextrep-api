@@ -11,7 +11,11 @@ import pool from '../../../database/db.js';
  * @param {string} body The body of the post
  */
 export async function createNewPost(user_id, title, { body = '' } = {}) {
-    const { rows } = await pool.query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [user_id, title, body ?? '']);
+    const { rows } = await pool.query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [
+        user_id,
+        title,
+        body ?? '',
+    ]);
 
     return rows[0];
 }
@@ -24,7 +28,10 @@ export async function createNewPost(user_id, title, { body = '' } = {}) {
  */
 export async function getPostById(post_id, { user_id = -1 } = {}) {
     // TODO: IMPLEMETN FRIENDS LOGIC
-    const { rows } = await pool.query("SELECT * FROM posts WHERE id = $1 AND (visibility = 'public' OR author_id = $2) LIMIT 1", [post_id, user_id ?? -1]);
+    const { rows } = await pool.query(
+        "SELECT * FROM posts WHERE id = $1 AND (visibility = 'public' OR author_id = $2) LIMIT 1",
+        [post_id, user_id ?? -1]
+    );
 
     if (rows.length === 0) {
         const error = new Error('Post not found or not accessible');

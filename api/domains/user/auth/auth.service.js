@@ -4,7 +4,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey } from './auth.queries.js';
+import { createNewUser, getUserFromKey, getUserById } from './auth.queries.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -70,28 +70,25 @@ export async function signup({ username, email, password }) {
     try {
         // Hash password
         const hashed_password = await bcrypt.hash(password, 12);
-        console.log('hashed password');
 
         // Create a user and get the data
         const user = await createNewUser(username, email, hashed_password);
-        console.log('create new user');
 
         // Create a token that can be used to sign in
         const token = jwt.sign(
             {
                 id: user.id,
                 username: user.username,
-                display_name: user.display_name,
                 account_type: user.account_type,
             },
             process.env.JWT_SECRET,
             { expiresIn: '8h' }
         );
-        console.log('create new token');
+
         return {
             status: 200,
             body: {
-                message: 'Successfully created new account! Welcome ' + user.display_name + '!',
+                message: 'Successfully created new account! Welcome ' + user.username + '!',
                 data: { token },
             },
         };
@@ -150,7 +147,6 @@ export async function login({ key, password }) {
             {
                 id: user.id,
                 username: user.username,
-                display_name: user.display_name,
                 account_type: user.account_type,
             },
             process.env.JWT_SECRET,
@@ -160,7 +156,7 @@ export async function login({ key, password }) {
         return {
             status: 200,
             body: {
-                message: 'Successfully logged in! Welcome ' + user.display_name + '!',
+                message: 'Successfully logged in! Welcome ' + user.username + '!',
                 data: { token },
             },
         };
@@ -175,14 +171,13 @@ export async function login({ key, password }) {
     }
 }
 
-
-export async function getUser(id, {user_id = -1} = {}) {
+export async function getUser(id, { user_id = -1 } = {}) {
     if (typeof id != 'number') {
         return { status: 400, body: { message: 'ID must be a number value' } };
     }
 
     try {
-        const user = await getUserById(id);
+        const user = await getUserById(id, { user_id });
 
         if (user.visibility === 'private' && user.id !== user_id) {
             return { status: 403, body: { message: 'You are not the owner of this user' } };

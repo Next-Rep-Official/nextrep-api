@@ -120,7 +120,10 @@ export async function getPosts({ user_id, order, limit = 20 }) {
         return { status: 400, body: { message: 'ID of user must be a number value' } };
     }
     if (typeof order != 'string' || !(order == 'ascending' || order == 'descending')) {
-        return { status: 400, body: { message: 'Order must be a string value that is either "ascending" or "descending"' } };
+        return {
+            status: 400,
+            body: { message: 'Order must be a string value that is either "ascending" or "descending"' },
+        };
     }
     if (typeof limit != 'number') {
         return { status: 400, body: { message: 'Limit must be a number value' } };
