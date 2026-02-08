@@ -4,10 +4,15 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey } from './auth.queries.js';
+import { createNewUser, getUserFromKey, getUserById } from './auth.queries.js';
 
-import dotenv from 'dotenv';
-dotenv.config();
+import config from '../../../config.js';
+
+import { validateType } from '../../../util/validation.js';
+import { ValidationError, ForbiddenError } from '../../../util/errors.js';
+import { CustomResponse } from '../../../util/response.js';
+
+// ======== SIGNUP ======== //
 
 /**
  * Endpoint to create a new account
@@ -16,133 +21,82 @@ dotenv.config();
  * @param {string} email The email of the new user
  * @param {string} password The raw password of the new user
  *
- * @returns {json} A jwt token for this user
+ * @returns {Promise<Object>} A jwt token for this user
  */
-export async function signup({ username, email, password }) {
-    // Handle possible internal errors
-    if (!process.env.JWT_SECRET) {
-        return {
-            status: 500,
-            body: { message: 'Internal server error' },
-        };
-    }
-
+export async function signup(username, email, password) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Email checks
-    if (typeof email != 'string') {
-        return {
-            status: 400,
-            body: { message: 'Email must be a string value' },
-        };
-    } else if (!emailRegex.test(email)) {
-        return { status: 400, body: { message: 'Invalid email format' } };
-    }
-
-    // Username checks
-    if (typeof username != 'string') {
-        return {
-            status: 400,
-            body: { message: 'Username must be a string value' },
-        };
-    }
-
-    // Password checks
-    if (typeof password != 'string') {
-        return {
-            status: 400,
-            body: { message: 'Password must be a string value' },
-        };
-    } else if (password.length < 8) {
-        return {
-            status: 400,
-            body: { message: 'Password must be at least 8 characters' },
-        };
-    } else if (password.toLowerCase() === password) {
-        return {
-            status: 400,
-            body: {
-                message: 'Password must include at least one uppercase charcter',
-            },
-        };
-    }
-
     try {
-        // Hash password
+        // Type checks
+        validateType(email, 'string', 'Email');
+        validateType(username, 'string', 'Username');
+        validateType(password, 'string', 'Password');
+        
+        // Email format check
+        if (!emailRegex.test(email)) {
+            throw new ValidationError('Invalid email format');
+        }
+
+        // Password length check
+        if (password.length < 8) {
+            throw new ValidationError('Password must be at least 8 characters');
+        }
+
+        // Password uppercase check
+        if (password.toLowerCase() === password) {
+            throw new ValidationError('Password must include at least one uppercase charcter');
+        }
+
         const hashed_password = await bcrypt.hash(password, 12);
-        console.log('hashed password');
-
-        // Create a user and get the data
         const user = await createNewUser(username, email, hashed_password);
-        console.log('create new user');
 
-        // Create a token that can be used to sign in
+        // Generate a token wiht an id, username, and account type
         const token = jwt.sign(
             {
                 id: user.id,
                 username: user.username,
-                display_name: user.display_name,
                 account_type: user.account_type,
             },
-            process.env.JWT_SECRET,
+            config.jwt.secret,
             { expiresIn: '8h' }
         );
-        console.log('create new token');
-        return {
-            status: 200,
-            body: {
-                message: 'Successfully created new account! Welcome ' + user.display_name + '!',
-                data: { token },
-            },
-        };
+
+        return new CustomResponse(200, 'Successfully created new account! Welcome ' + user.username + '!', { token }).get();
     } catch (err) {
         if (err.code == 23505) {
-            return {
-                status: 409,
-                body: { message: 'Username or email already in use' },
-            };
+            return new CustomResponse(409, 'Username or email already in use').get();
         }
 
-        return { status: 500, body: { message: 'Internal server error' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
+
+
+// ======== LOGIN ======== //
 
 /**
  * Endpoint to login to an existing account
  *
  * @param {string} key The key (either username or email)
  * @param {string} password Raw attempted password
+ * 
+ * @returns {Promise<Object>} A jwt token for this user
  */
-export async function login({ key, password }) {
-    // Handle possible internal errors
-    if (!process.env.JWT_SECRET) {
-        return { status: 500, body: { message: 'Internal server error' } };
-    }
-
-    // Check key
-    if (typeof key != 'string') {
-        return { status: 400, body: { message: 'Key must be a string value' } };
-    }
-
-    // Check password
-    if (typeof password != 'string') {
-        return {
-            status: 400,
-            body: { message: 'Password must be a string value' },
-        };
-    }
-
+export async function login(key, password) {
     try {
-        // Get the user
+        // Type checks
+        validateType(key, 'string', 'Key');
+        validateType(password, 'string', 'Password');
+
         const user = await getUserFromKey(key.toLowerCase());
 
-        // Check the password
         const passwordValid = await bcrypt.compare(password, user.hashed_password);
         if (!passwordValid) {
-            return {
-                status: 400,
-                body: { message: 'Incorrect username/email or password' },
-            };
+            return new CustomResponse(400, 'Incorrect username/email or password').get();
         }
 
         // Create a token that can be used to sign in
@@ -150,27 +104,48 @@ export async function login({ key, password }) {
             {
                 id: user.id,
                 username: user.username,
-                display_name: user.display_name,
                 account_type: user.account_type,
             },
-            process.env.JWT_SECRET,
+            config.jwt.secret,
             { expiresIn: '8h' }
         );
 
-        return {
-            status: 200,
-            body: {
-                message: 'Successfully logged in! Welcome ' + user.display_name + '!',
-                data: { token },
-            },
-        };
+        return new CustomResponse(200, 'Successfully logged in! Welcome ' + user.username + '!', { token }).get();
     } catch (err) {
-        if (err.code === 1) {
-            return {
-                status: 400,
-                body: { message: 'No users match given key' },
-            };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
         }
-        return { status: 500, body: { message: 'Internal server error' } };
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+
+// ======== GET USER ======== //
+
+/**
+ * Endpoint to get a user by their id
+ *
+ * @param {number} id The id of the user to get
+ * @param {number} user_id The id of the user to get the user for
+ *
+ * @returns {Promise<Object>} A user object
+ */
+export async function getUser(id, { user_id = -1 } = {}) {
+    try {
+        validateType(id, 'number', 'ID');
+
+        const user = await getUserById(id, { user_id });
+
+        if (user.visibility === 'private' && user.id !== user_id) {
+            throw new ForbiddenError('You are not the owner of this user');
+        }
+
+        return new CustomResponse(200, 'User retrieved successfully!', { user }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
