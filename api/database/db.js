@@ -4,14 +4,12 @@
 import pkg from 'pg';
 
 // Environemt variables
-import dotenv from 'dotenv';
-
-dotenv.config();
+import config from '../config.js';
 
 const { Pool } = pkg;
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: config.database.url,
     ssl: { rejectUnauthorized: false },
 });
 

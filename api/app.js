@@ -21,10 +21,10 @@ const app = express();
 
 // ======== ON INIT ======== //
 
-Object.values(config).forEach((value) => {
-    Object.entries(value).forEach(([key, value]) => {
-        if (value == null || value == '') {
-            throw new Error(`${value.key}.${key} is not set in the config`);
+Object.entries(config).forEach(([sectionKey, sectionValue]) => {
+    Object.entries(sectionValue).forEach(([key2, value2]) => {
+        if (value2 == null || value2 == '') {
+            throw new Error(`${sectionKey}.${key2} is not set in the config`);
         }
     });
 });
@@ -43,7 +43,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Add Tables
-await initTables().then(() => console.log('Tables initialized successfully ✅'));
+await initTables().then((value) => value ? console.log('Tables initialized successfully ✅') : console.log('Tables initialization failed ❌'));
 
 // Add Routers
 app.use('/user', user);

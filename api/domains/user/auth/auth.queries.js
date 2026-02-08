@@ -4,7 +4,7 @@
 import pool from '../../../database/db.js';
 import { runTransaction } from '../../../database/helpers/transaction.js';
 import { createNewProfileQuery } from '../profile/profile.queries.js';
-import { NotFoundError } from '../../../util/backendErrors.js';
+import { NotFoundError } from '../../../util/errors.js';
 
 
 
@@ -23,13 +23,13 @@ export async function createNewUser(username, email, hashed_password, { client =
 
         // If no rows are found, throw an error
         if (rows.length === 0) {
-            throw new NotFoundError('Failed to create user');
+            throw new DatabaseError('Failed to create user', { status: 500, code: -1 });
         }
 
         await createNewProfileQuery(rows[0].id, { client: c });
 
         return rows[0];
-    }, { client });
+    }, { client: (client ?? pool) });
 
     return result;
 }
@@ -42,7 +42,7 @@ export async function createNewUser(username, email, hashed_password, { client =
  */
 export async function getUserFromKey(key, { client = pool } = {}) {
     // Get the rows from the database that match the key
-    const { rows } = await client.query('SELECT * FROM users WHERE email = $1 OR username = $1 LIMIT 1', [key]);
+    const { rows } = await (client ?? pool).query('SELECT * FROM users WHERE email = $1 OR username = $1 LIMIT 1', [key]);
 
     // If no rows are found, throw an error
     if (rows.length === 0) {
@@ -57,7 +57,7 @@ export async function getUserFromKey(key, { client = pool } = {}) {
  */
 export async function getUserById(id, { user_id = -1, client = pool } = {}) {
     // Get the rows from the database that match the id and are visible to that user
-    const { rows } = await client.query(
+    const { rows } = await (client ?? pool).query(
         "SELECT * FROM users WHERE id = $1 AND (visibility = 'public' OR id = $2) LIMIT 1",
         [id, user_id ?? -1]
     );

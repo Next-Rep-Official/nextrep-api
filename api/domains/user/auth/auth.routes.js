@@ -11,7 +11,8 @@ const router = Router();
 
 router.post('/sign-up', async (req, res) => {
     try {
-        const response = await signup(req.body);
+        const { username, email, password } = req.body;
+        const response = await signup(username, email, password);
         return res.status(response.status).json(response.body);
     } catch (err) {
         return res.status(500).json({ message: 'Internal server error' });
@@ -23,7 +24,9 @@ router.post('/sign-up', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const response = await login(req.body);
+        const { key, password } = req.body;
+        const response = await login(key, password);
+
         return res.status(response.status).json(response.body);
     } catch (err) {
         return res.status(500).json({ message: 'Internal server error' });
@@ -35,7 +38,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/:id', acceptAuth, async (req, res) => {
     try {
-        const response = await getUser(req.params.id, { user_id: req.user.id });
+        const response = await getUser(req.params.id, { user_id: req.user.id ?? -1 });
         return res.status(response.status).json(response.body);
     } catch (err) {
         return res.status(500).json({ message: 'Internal server error' });

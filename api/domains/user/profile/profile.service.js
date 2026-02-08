@@ -4,154 +4,187 @@
 import {  getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery } from './profile.queries.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
+import { CustomResponse } from '../../../util/response.js';
+import { ValidationError, DatabaseError } from '../../../util/errors.js';
 
-/**
- * Updates a user's profile picture
- * @param {number} user_id the ID of the user
- * @param {File} profile_picture 
- * @returns {Promise<Object>} the updated profile
- */
-export async function updateProfilePicture(user_id, profile_picture) {
-    try {
-        validateType(user_id, 'number', 'User ID');
-        validateType(profile_picture, 'object', 'Profile Picture');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
 
-    if (profile_picture.buffer === undefined || profile_picture.mimetype === undefined) {
-        return {
-            status: 400,
-            body: { message: 'Profile picture must be a file' },
-        };
-    }
-
-    let asset = null;
-
-    try {
-        asset = await addAsset({ file: profile_picture, owner_id: user_id, owner_type: 'user', type: 'profile_picture' });
-
-        if (asset.status !== 200) {
-            return { status: asset.status, body: { message: asset.body.message } };
-        }
-
-        const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, asset.body.data.id);
-
-        return { status: 200, body: { message: 'Profile picture updated successfully', data: updatedProfile } };
-    } catch (err) {
-        if (asset) {
-            await removeAsset({id: asset.body.data.id});
-        }
-
-        return { status: 500, body: { message: 'Internal server error' } };
-    }
-}
-
-export async function updateProfileBio(user_id, bio) {
-    try {
-        validateType(user_id, 'number', 'User ID');
-        validateType(bio, 'string', 'Bio');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
-
-    if (bio === undefined || bio === null || bio === '') {
-        return { status: 400, body: { message: 'Bio is required' } };
-    }
-
-    try {
-        const updatedProfile = await updateProfileBioByUserIdQuery(user_id, bio);
-        return { status: 200, body: { message: 'Profile bio updated successfully', data: updatedProfile } };
-    } catch (err) {
-        return { status: 500, body: { message: 'Internal server error' } };
-    }
-}
-
-export async function updateProfilePronouns(user_id, pronouns) {
-    try {
-        validateType(user_id, 'number', 'User ID');
-        validateType(pronouns, 'string', 'Pronouns');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
-
-    if (pronouns === undefined || pronouns === null || pronouns === '') {
-        return { status: 400, body: { message: 'Pronouns are required' } };
-    }
-
-    try {
-        const updatedProfile = await updateProfilePronounsByUserIdQuery(user_id, pronouns);
-        return { status: 200, body: { message: 'Profile pronouns updated successfully', data: updatedProfile } };
-    } catch (err) {
-        return { status: 500, body: { message: 'Internal server error' } };
-    }
-    
-}
-
-export async function updateDisplayName(user_id, display_name) {
-    try {
-        validateType(user_id, 'number', 'User ID');
-        validateType(display_name, 'string', 'Display Name');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
-
-    if (display_name === undefined || display_name === null || display_name === '') {
-        return { status: 400, body: { message: 'Display name is required' } };
-    }
-
-    try {
-        const updatedProfile = await updateDisplayNameByUserIdQuery(user_id, display_name);
-        return { status: 200, body: { message: 'Profile display name updated successfully', data: updatedProfile } };
-    } catch (err) {
-        return { status: 500, body: { message: 'Internal server error' } };
-    }
-}
+// ======== GET PROFILES ======== //
 
 /**
  * Gets the profile of the requesting user
  *
  * @param {number} user_id the ID of the user
+ * 
  * @returns {Promise<Object>} the response object with the status and body
  */
 export async function getSelfProfile(user_id) {
     try {
         validateType(user_id, 'number', 'User ID');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
 
-    try {
         const profile = await getProfileByUserIdQuery(user_id);
-        return { status: 200, body: { message: 'Profile retrieved successfully', data: profile } };
+        return new CustomResponse(200, 'Profile retrieved successfully', { profile }).get();
     } catch (err) {
-        if (err.message === 'Profile not found') {
-            return { status: 404, body: { message: 'Profile not found' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
         }
-        return { status: 500, body: { message: 'Internal server error' } };
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
 
 /**
  * Gets a profile by its id
  * 
- * @param {number} id the ID of the profile
- * @returns 
+ * @param {number} id The ID of the profile
+ * 
+ * @param {Object} options The options for the service (user_id)
+ * 
+ * @returns {Promise<Object>} The response object with the status and body
  */
 export async function getProfileById(id, { user_id = -1 } = {}) {
     try {
+        // Type checks
         validateType(id, 'number', 'ID');
+
+        const profile = await getProfileByIdQuery(id, { user_id: user_id ?? -1 });
+
+        return new CustomResponse(200, 'Profile retrieved successfully', { profile }).get();
     } catch (err) {
-        return { status: 400, body: { message: err.message } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
     }
+}
+
+
+// ======== UPDATE PROFILES ======== //
+
+/**
+ * Updates a user's profile picture
+ * 
+ * @param {number} user_id the ID of the user
+ * @param {File} profile_picture 
+ * 
+ * @returns {Promise<Object>} the updated profile
+ */
+export async function updateProfilePicture(user_id, profile_picture) {
+    let asset = null;
 
     try {
-        const profile = await getProfileByIdQuery(id, { user_id });
-        return { status: 200, body: { message: 'Profile retrieved successfully', data: profile } };
-    } catch (err) {
-        if (err.message === 'Profile not found') {
-            return { status: 404, body: { message: 'Profile not found' } };
+        // Type checks
+        validateType(user_id, 'number', 'User ID');
+        if (profile_picture.buffer === undefined || profile_picture.mimetype === undefined) {
+            throw new ValidationError('Profile picture must be a file');
         }
-        return { status: 500, body: { message: 'Internal server error' } };
+
+        // Add asset to the database and bucket
+        asset = await addAsset({ file: profile_picture, owner_id: user_id, owner_type: 'user', type: 'profile_picture' });
+
+        // If the asset was not added successfully, throw an error
+        if (asset.status !== 200) {
+            throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
+        }
+
+        // Update the profile picture of the user
+        const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, asset.body.data.id);
+
+        return new CustomResponse(200, 'Profile picture updated successfully', { profile: updatedProfile }).get();
+    } catch (err) {
+        if (asset) {
+            await removeAsset({id: asset.body.data.id});
+        }
+
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+/**
+ * Updates a user's profile bio
+ * 
+ * @param {number} user_id the ID of the user
+ * @param {string} bio the bio of the user
+ * 
+ * @returns {Promise<Object>} the updated profile
+ */
+export async function updateProfileBio(user_id, bio) {
+    try {
+        // Type checks
+        validateType(user_id, 'number', 'User ID');
+        validateType(bio, 'string', 'Bio');
+
+        if (bio === undefined || bio === null || bio === '') {
+            throw new ValidationError('Bio is required');
+        }
+
+        const updatedProfile = await updateProfileBioByUserIdQuery(user_id, bio);
+        return new CustomResponse(200, 'Profile bio updated successfully', { profile: updatedProfile }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+/**
+ * Updates a user's profile pronouns
+ * 
+ * @param {number} user_id the ID of the user
+ * @param {string} pronouns the pronouns of the user
+ * 
+ * @returns {Promise<Object>} the updated profile
+ */
+export async function updateProfilePronouns(user_id, pronouns) {
+    try {
+        // Type checks
+        validateType(user_id, 'number', 'User ID');
+        validateType(pronouns, 'string', 'Pronouns');
+
+        if (pronouns === undefined || pronouns === null || pronouns === '') {
+            throw new ValidationError('Pronouns are required');
+        }
+
+        const updatedProfile = await updateProfilePronounsByUserIdQuery(user_id, pronouns);
+        return new CustomResponse(200, 'Profile pronouns updated successfully', { profile: updatedProfile }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    } 
+}
+
+/**
+ * Updates a user's display name
+ * 
+ * @param {number} user_id the ID of the user
+ * @param {string} display_name the display name of the user
+ * 
+ * @returns {Promise<Object>} the updated profile
+ */
+export async function updateDisplayName(user_id, display_name) {
+    try {
+        validateType(user_id, 'number', 'User ID');
+        validateType(display_name, 'string', 'Display Name');
+
+        if (display_name === undefined || display_name === null || display_name === '') {
+            throw new ValidationError('Display name is required');
+        }
+
+        const updatedProfile = await updateDisplayNameByUserIdQuery(user_id, display_name);
+        return new CustomResponse(200, 'Profile display name updated successfully', { profile: updatedProfile }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }

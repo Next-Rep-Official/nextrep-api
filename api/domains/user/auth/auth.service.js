@@ -9,7 +9,7 @@ import { createNewUser, getUserFromKey, getUserById } from './auth.queries.js';
 import config from '../../../config.js';
 
 import { validateType } from '../../../util/validation.js';
-import { ValidationError, ForbiddenError } from '../../../util/backendErrors.js';
+import { ValidationError, ForbiddenError } from '../../../util/errors.js';
 import { CustomResponse } from '../../../util/response.js';
 
 // ======== SIGNUP ======== //
@@ -23,7 +23,7 @@ import { CustomResponse } from '../../../util/response.js';
  *
  * @returns {Promise<Object>} A jwt token for this user
  */
-export async function signup({ username, email, password }) {
+export async function signup(username, email, password) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     try {
@@ -86,7 +86,7 @@ export async function signup({ username, email, password }) {
  * 
  * @returns {Promise<Object>} A jwt token for this user
  */
-export async function login({ key, password }) {
+export async function login(key, password) {
     try {
         // Type checks
         validateType(key, 'string', 'Key');

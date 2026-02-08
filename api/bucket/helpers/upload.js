@@ -39,3 +39,18 @@ export async function uploadFile(file, path, filename = null) {
 export async function uploadAllFiles(files, path) {
     return await Promise.all(files.map(async (file) => await uploadFile(file, path)));
 }
+
+/**
+ * Gets the path of a file in the S3 bucket
+ * 
+ * @param {string} owner_type the type of the owner
+ * @param {string} owner_id the ID of the owner
+ * @param {string} type the type of the asset
+ *
+ * @returns {string} The path of the file
+ */
+export function getPath(owner_type, owner_id, type) {
+    const path = `assets/${owner_type}/${owner_id}/${type}`;
+
+    return path;
+}

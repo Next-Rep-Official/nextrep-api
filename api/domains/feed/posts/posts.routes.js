@@ -12,8 +12,9 @@ const router = Router();
 router.post('/post', requireAuth, async (req, res) => {
     try {
         const { id } = req.user;
+        const { title, body } = req.body;
 
-        const response = await createPost({ author_id: id, title: req.body.title, body: req.body.body });
+        const response = await createPost(id, title, { body });
 
         res.status(response.status).json(response.body);
     } catch (err) {
@@ -34,18 +35,18 @@ router.get('/post', acceptAuth, async (req, res) => {
 
         if (parsedId) {
             // Get a single post
-            result = await getPost({ user_id, post_id: parsedId });
+            result = await getPost(parsedId, { user_id: user_id ?? -1 });
         } else if (search_term) {
             // Search posts
-            result = await searchPosts({ user_id, search_term, limit: parsedLimit });
+            result = await searchPosts(search_term, { user_id: user_id ?? -1, limit: parsedLimit ?? 20 });
         } else {
             // Get posts
-            result = await getPosts({ user_id, order: newOrder, limit: parsedLimit });
+            result = await getPosts(newOrder, { user_id: user_id ?? -1, limit: parsedLimit ?? 20 });
         }
 
-        return res.status(result.status).json(result.body);
+        res.status(result.status).json(result.body);
     } catch (err) {
-        return res.status(500).json({ message: 'Internal server error' + err });
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
@@ -55,21 +56,20 @@ router.post('/:post_id/reply', requireAuth, async (req, res) => {
     const post_id = Number(req.params.post_id);
     const { body } = req.body;
 
-    if (!body) return res.status(400).json({ message: 'Body is required' });
-
     try {
-        const response = await replyToPost({ user_id: req.user.id, post_id, body });
+        const response = await replyToPost(req.user.id, post_id, body);
         res.status(response.status).json(response.body);
     } catch (err) {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-router.get('/:post_id/reply', async (req, res) => {
+router.get('/:post_id/reply', acceptAuth, async (req, res) => {
     const post_id = Number(req.params.post_id);
+    const user_id = req.user?.id ?? -1;
 
     try {
-        const response = await getRepliesFromPost({ post_id });
+        const response = await getRepliesFromPost(post_id, { user_id });
         res.status(response.status).json(response.body);
     } catch (err) {
         res.status(500).json({ message: 'Internal server error' });

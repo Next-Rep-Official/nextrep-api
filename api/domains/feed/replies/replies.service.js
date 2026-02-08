@@ -2,7 +2,10 @@
 // --------
 
 import { validateType } from '../../../util/validation.js';
-import { addReplyToPost, addReplyToReply, getAllRepliesFromPost, getAllRepliesFromReply } from './replies.queries.js';
+import { addReply, getAllRepliesFromPost, getAllRepliesFromReply } from './replies.queries.js';
+import { CustomResponse } from '../../../util/response.js';
+
+// ======== CREATE REPLIES ========
 
 /**
  * Replies to a post
@@ -13,25 +16,25 @@ import { addReplyToPost, addReplyToReply, getAllRepliesFromPost, getAllRepliesFr
  *
  * @returns the response
  */
-export async function replyToPost({ user_id, post_id, body }) {
+export async function replyToPost(user_id, post_id, body) {
     try {
         validateType(user_id, 'number', 'User ID');
         validateType(post_id, 'number', 'Post ID');
         validateType(body, 'string', 'Body');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
 
-    try {
-        await addReplyToPost(user_id, post_id, body);
+        const reply = await addReply(user_id, body, { post_id });
 
-        return { status: 200, body: { message: 'Reply created successfully!' } };
+        return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
         if (err.code === 23503) {
-            return { status: 400, body: { message: 'Post does not exist' } };
+            return new CustomResponse(400, 'Post does not exist').get();
         }
 
-        return { status: 500, body: { message: 'Internal server error' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error' + err.message).get();
     }
 }
 
@@ -44,27 +47,30 @@ export async function replyToPost({ user_id, post_id, body }) {
  *
  * @returns the response
  */
-export async function replyToReply({ user_id, reply_id, body }) {
+export async function replyToReply(user_id, reply_id, body) {
     try {
         validateType(user_id, 'number', 'User ID');
         validateType(reply_id, 'number', 'Reply ID');
         validateType(body, 'string', 'Body');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
+        
+        const reply = await addReply(user_id, body, { parent_id: reply_id });
 
-    try {
-        await addReplyToReply(user_id, reply_id, body);
-
-        return { status: 200, body: { message: 'Reply created successfully!' } };
+        return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
         if (err.code === 23503) {
-            return { status: 400, body: { message: 'Parent reply does not exist' } };
+            return new CustomResponse(400, 'Parent reply does not exist').get();
         }
 
-        return { status: 500, body: { message: 'Internal server error' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
+
+
+// ======== GET REPLIES ========
 
 /**
  * Gets all replies from a post
@@ -73,23 +79,19 @@ export async function replyToReply({ user_id, reply_id, body }) {
  *
  * @returns {Array} An array of all the replies
  */
-export async function getRepliesFromPost({ post_id }) {
+export async function getRepliesFromPost(post_id, { user_id = -1 } = {}) {
     try {
         validateType(post_id, 'number', 'Post ID');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
 
-    try {
-        const result = await getAllRepliesFromPost(post_id);
+        const result = await getAllRepliesFromPost(post_id, { user_id: user_id ?? -1 });
 
-        return { status: 200, body: { message: 'Retreived replies successfully!', data: { replies: result } } };
+        return new CustomResponse(200, 'Retrieved replies successfully!', { replies: result }).get();
     } catch (err) {
-        if (err.code === 1) {
-            return { status: 404, body: { message: 'No replies found' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
         }
 
-        return { status: 500, body: { message: 'Internal server error' } };
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
 
@@ -100,22 +102,18 @@ export async function getRepliesFromPost({ post_id }) {
  *
  * @returns {Array} An array of all the replies
  */
-export async function getRepliesFromReply({ reply_id }) {
+export async function getRepliesFromReply(reply_id, { user_id = -1 } = {}) {
     try {
         validateType(reply_id, 'number', 'Reply ID');
-    } catch (err) {
-        return { status: 400, body: { message: err.message } };
-    }
 
-    try {
-        const result = await getAllRepliesFromReply(reply_id);
+        const result = await getAllRepliesFromReply(reply_id, { user_id: user_id ?? -1 });
 
-        return { status: 200, body: { message: 'Retrieved replies successfully!', data: { replies: result } } };
+        return new CustomResponse(200, 'Retrieved replies successfully!', { replies: result }).get();
     } catch (err) {
-        if (err.code === 1) {
-            return { status: 404, body: { message: 'No replies found' } };
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
         }
 
-        return { status: 500, body: { message: 'Internal server error' } };
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
