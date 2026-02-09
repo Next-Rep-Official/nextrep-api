@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 
-import { signup, login, getUser } from './auth.service.js';
+import { signup, login, getUser, searchUsers } from './auth.service.js';
 import { acceptAuth } from '../../../util/middleware.js';
 const router = Router();
 
@@ -38,10 +38,19 @@ router.post('/login', async (req, res) => {
 
 router.get('/:id', acceptAuth, async (req, res) => {
     try {
-        const response = await getUser(req.params.id, { user_id: req.user.id ?? -1 });
+        const response = await getUser(req.params.id, { user_id: req.user?.id ?? -1 });
         return res.status(response.status).json(response.body);
     } catch (err) {
         return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.get('/search/:query', acceptAuth, async (req, res) => {
+    try {
+        const response = await searchUsers(req.params.query, { user_id: req.user?.id ?? -1 });
+        return res.status(response.status).json(response.body);
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error' + err.message });
     }
 });
 

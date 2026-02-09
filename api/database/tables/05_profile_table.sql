@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS public.profiles(
     pronouns TEXT NOT NULL CHECK(pronouns = ANY (ARRAY['h', 's', 'o', 'n'])) DEFAULT 'n',
     bio TEXT DEFAULT NULL, 
     posts_created INT NOT NULL DEFAULT 0,
-    total_likes INT NOT NULL DEFAULT 0
+    total_likes INT NOT NULL DEFAULT 0,
+    followers INT NOT NULL DEFAULT 0,
+    following INT NOT NULL DEFAULT 0
 );
 
 CREATE OR REPLACE FUNCTION enforce_profile_picture_type()

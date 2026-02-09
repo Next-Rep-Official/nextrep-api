@@ -4,7 +4,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey, getUserById } from './auth.queries.js';
+import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm } from './auth.queries.js';
 
 import config from '../../../config.js';
 
@@ -141,6 +141,32 @@ export async function getUser(id, { user_id = -1 } = {}) {
         }
 
         return new CustomResponse(200, 'User retrieved successfully!', { user }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+/**
+ * Endpoint to search for users by a query
+ * 
+ * @param {string} query The query to search for
+ * @param {object} { user_id = -1 } The id of the user searching
+ * 
+ * @returns {Promise<Object>} A list of users
+ */
+export async function searchUsers(query, { user_id = -1 } = {}) {
+    try {
+        validateType(query, 'string', 'Query');
+
+        if (!query) throw new ValidationError('Please input a search term');
+
+        const users = await searchUsersByTerm(query, { user_id: user_id ?? -1 });
+
+        return new CustomResponse(200, 'Successfully found users!', { users }).get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
