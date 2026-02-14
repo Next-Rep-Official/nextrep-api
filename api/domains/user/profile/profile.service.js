@@ -1,12 +1,11 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import {  getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery } from './profile.queries.js';
+import { getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery, getSelfProfileQuery } from './profile.queries.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError, DatabaseError } from '../../../util/errors.js';
-
 
 // ======== GET PROFILES ======== //
 
@@ -65,7 +64,7 @@ export async function getProfileById(id, { user_id = -1 } = {}) {
  * 
  * @param {number} user_id the ID of the user
  * @param {File} profile_picture 
- * 
+ *  
  * @returns {Promise<Object>} the updated profile
  */
 export async function updateProfilePicture(user_id, profile_picture) {
@@ -74,9 +73,13 @@ export async function updateProfilePicture(user_id, profile_picture) {
     try {
         // Type checks
         validateType(user_id, 'number', 'User ID');
+
+        const profile = await getProfileByUserIdQuery(user_id);
+
         if (profile_picture.buffer === undefined || profile_picture.mimetype === undefined) {
             throw new ValidationError('Profile picture must be a file');
         }
+
 
         // Add asset to the database and bucket
         asset = await addAsset(profile_picture, user_id, 'user', 'profile_picture');
@@ -90,6 +93,14 @@ export async function updateProfilePicture(user_id, profile_picture) {
 
         // Update the profile picture of the user
         const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, assetId);
+
+        if (profile.profile_picture != null) {
+            const response = await removeAsset(profile.profile_picture);
+            if (response.status !== 200) {
+                console.error("Failed to remove old asset ❌");
+                throw new DatabaseError('Failed to remove old asset', { status: response.status, code: -1 });
+            }
+        }
 
         return new CustomResponse(200, 'Profile picture updated successfully', { profile: updatedProfile }).get();
     } catch (err) {
