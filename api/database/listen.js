@@ -5,13 +5,14 @@ import pool from './db.js';
 import { removeAsset } from '../domains/misc/assets/assets.service.js';
 
 const client = await pool.connect();
+console.log('Connected to database ✅');
 
 client.on('notification', async (msg) => {
     if (msg.channel === 'profile_removed') {
         try {
             const payload = JSON.parse(msg.payload);
             const response = await removeAsset(Number(payload.profile_picture));
-
+            console.log('Profile picture removed ✅');
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);
             }
@@ -22,7 +23,7 @@ client.on('notification', async (msg) => {
         try {
             const payload = JSON.parse(msg.payload);
             const response = await removeAsset(Number(payload.asset_id));
-
+            console.log('Post attachment removed ✅');
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);
             }
