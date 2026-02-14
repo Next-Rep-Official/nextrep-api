@@ -6,10 +6,13 @@ import config from '../config.js';
 
 export const s3 = new S3Client({
     region: config.aws.region,
+    endpoint: config.aws.endpoint || undefined,
+    forcePathStyle: false,
     credentials: {
-        accessKeyId: config.aws.accessKeyId,
-        secretAccessKey: config.aws.secretAccessKey,
+        accessKeyId: config.aws.accessKeyId?.trim(),
+        secretAccessKey: config.aws.secretAccessKey?.trim(),
     },
 });
+
 
 export const BUCKET_NAME = config.aws.bucketName;

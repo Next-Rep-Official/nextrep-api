@@ -2,6 +2,7 @@
 // --------
 
 import pool from '../db.js';
+import { DatabaseError } from '../../util/errors.js';
 
 /**
  * Runs multiple queries inside a transaction
@@ -11,10 +12,8 @@ import pool from '../db.js';
  * @returns {Promise<any>} The result of the callback
  */
 export async function runTransaction(callback, { externalClient = pool } = {}) {
-    const client = externalClient ?? await pool.connect();
-    const shouldRelease = !externalClient;
-
-    await (client ?? pool).connect(); // get a client from the pool
+    const client = await pool.connect();
+    
     try {
         await client.query('BEGIN'); // start transaction
         const result = await callback(client); // run user queries
@@ -22,8 +21,8 @@ export async function runTransaction(callback, { externalClient = pool } = {}) {
         return result;
     } catch (err) {
         await client.query('ROLLBACK'); // rollback on error
-        throw new DatabaseError('Failed to run transaction', { code: -1, status: 500 });
+        throw new DatabaseError('Failed to run transaction' + err.message, { code: -1, status: 500 });
     } finally {
-        if (shouldRelease) client.release();
+        client.release();
     }
 }

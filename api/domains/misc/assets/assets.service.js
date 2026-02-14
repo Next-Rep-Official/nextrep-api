@@ -7,7 +7,7 @@ import { getPostById } from '../../feed/posts/posts.queries.js';
 import { getUserById } from '../../user/auth/auth.queries.js';
 import { getSignedUrl } from '../../../bucket/helpers/load.js';
 import { getPath } from '../../../bucket/helpers/upload.js';
-import { ForbiddenError, ValidationError } from '../../../util/errors.js';
+import { ForbiddenError, ValidationError, DatabaseError } from '../../../util/errors.js';
 import { CustomResponse } from '../../../util/response.js';
 
 

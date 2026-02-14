@@ -2,7 +2,7 @@
 // --------
 
 import { Router } from 'express';
-import { getAsset } from './assets.service.js';
+import { getAsset, removeAsset } from './assets.service.js';
 import multer from 'multer';
 import { acceptAuth } from '../../../util/middleware.js';
 import { getUrl } from './assets.service.js';
@@ -27,6 +27,16 @@ router.get('/url/:id', acceptAuth, async (req, res) => {
         res.status(result.status).json(result.body);
     } catch (err) {
         console.error('[assets] GET /url/:id 500:', err?.message ?? err, err?.stack);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.delete('/test-delete/:id', acceptAuth, async (req, res) => {
+    try {
+        const result = await removeAsset(Number(req.params.id));
+        res.status(result.status).json(result.body);
+    } catch (err) {
+        console.error('[assets] DELETE /test-delete/:id 500:', err?.message ?? err, err?.stack);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
