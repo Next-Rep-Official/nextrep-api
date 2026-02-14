@@ -8,27 +8,35 @@ const client = await pool.connect();
 console.log('Connected to database ✅');
 
 client.on('notification', async (msg) => {
+    console.log('Notification received ✅');
+
     if (msg.channel === 'profile_removed') {
         try {
             const payload = JSON.parse(msg.payload);
-            const response = await removeAsset(Number(payload.profile_picture));
-            console.log('Profile picture removed ✅');
+            const assetId = payload.profile_picture != null ? Number(payload.profile_picture) : null;
+            if (assetId == null) return; // no picture was set
+            const response = await removeAsset(assetId);
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);
+            } else {
+                console.log('Profile picture removed ✅');
             }
         } catch (err) {
-            console.error('Error removing asset:', err);
+            console.error('Error removing profile picture:', err);
         }
     } else if (msg.channel === 'post_attachment_removed') {
         try {
             const payload = JSON.parse(msg.payload);
-            const response = await removeAsset(Number(payload.asset_id));
-            console.log('Post attachment removed ✅');
+            const assetId = payload.asset_id != null ? Number(payload.asset_id) : null;
+            if (assetId == null) return;
+            const response = await removeAsset(assetId);
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);
+            } else {
+                console.log('Post attachment removed ✅');
             }
         } catch (err) {
-            console.error('Error removing asset:', err);
+            console.error('Error removing post attachment:', err);
         }
     }
 });
