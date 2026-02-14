@@ -4,7 +4,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm } from './auth.queries.js';
+import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm, deleteUserById } from './auth.queries.js';
 
 import config from '../../../config.js';
 
@@ -168,6 +168,36 @@ export async function searchUsers(query, { user_id = -1 } = {}) {
 
         return new CustomResponse(200, 'Successfully found users!', { users }).get();
     } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+// ======== DELETE USER ======== //
+
+/**
+ * Endpoint to delete a user by its id
+ * 
+ * @param {number} id The id of the user to delete
+ * @param {number} user_id The id of the user to delete the user for
+ * 
+ * @returns {Promise<Object>} A success message
+ */
+export async function deleteUser(id) {
+    try {
+        validateType(id, 'number', 'ID');
+
+        await deleteUserById(id);
+
+        return new CustomResponse(200, 'User deleted successfully!').get();
+    } catch (err) {
+        if (err.code === 23503) {
+            return new CustomResponse(400, 'User does not exist').get();
+        }
+
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }

@@ -3,7 +3,8 @@
 
 import pool from '../../../database/db.js';
 import { DatabaseError, NotFoundError } from '../../../util/errors.js';
-
+import { runTransaction } from '../../../database/helpers/transaction.js';
+import { removeAsset } from '../../misc/assets/assets.service.js';
 
 
 // ======== CREATE POSTS ======== //
@@ -11,18 +12,22 @@ import { DatabaseError, NotFoundError } from '../../../util/errors.js';
 /**
  * Creates a new post and pushes it to the database
  */
-export async function createNewPost(user_id, title, { body = '', client = pool } = {}) {
-    const { rows } = await (client ?? pool).query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [
-        user_id,
-        title,
-        body ?? '',
-    ]);
+export async function createNewPost(user_id, title, { body = '', attachment_ids = [], client } = {}) {
+    const result = await runTransaction(async (c) => {
+        const { rows } = await c.query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [user_id, title, body ?? '']);
 
-    if (rows.length === 0) {
-        throw new DatabaseError('Failed to create post', { code: -1, status: 500 });
-    }
+        if (rows.length === 0) throw new DatabaseError('Failed to create post', { code: -1, status: 500 });
 
-    return rows[0];
+        for (const attachment_id of attachment_ids) {
+            await c.query('INSERT INTO post_attachments (post_id, asset_id) VALUES ($1, $2)', [rows[0].id, attachment_id]);
+        }
+
+        return rows[0];
+    }, { client: (client ?? pool) });
+
+    if (!result) throw new DatabaseError('Failed to create post', { code: -1, status: 500 });
+
+    return result;
 }
 
 
@@ -97,4 +102,35 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
     }
 
     return rows;
+}
+
+// ======== GET POST ATTACHMENTS ======== //
+
+/**
+ * Gets all attachments for a post
+ */
+export async function getAttachmentsForPost(post_id, { user_id = -1, client = pool } = {}) {
+    const { rows } = await (client ?? pool).query(
+        `SELECT pa.*
+         FROM post_attachments pa
+         JOIN posts p ON p.id = pa.post_id
+         WHERE pa.post_id = $1
+           AND (p.visibility = 'public' OR p.author_id = $2)`,
+        [post_id, user_id ?? -1]
+    );
+
+    if (rows.length === 0) throw new NotFoundError('No attachments found');
+
+    return rows;
+}
+
+// ======== DELETE POSTS ======== //
+
+/**
+ * Deletes a post
+ */
+export async function deletePostById(user_id, post_id, { client = pool } = {}) {
+    const { rows } = await (client ?? pool).query('DELETE FROM posts WHERE id = $1 AND author_id = $2 RETURNING *', [post_id, user_id ?? -1]);
+        
+    if (rows.length === 0) throw new NotFoundError('Post not found');
 }

@@ -39,4 +39,18 @@ router.get('/:reply_id/reply', acceptAuth, async (req, res) => {
     }
 });
 
+
+// ======== DELETE REPLIES ========
+
+router.delete('/:reply_id', requireAuth, async (req, res) => {
+    const reply_id = Number(req.params.reply_id);
+    const user_id = req.user.id;
+
+    try {
+        const response = await deleteReply(user_id, reply_id);
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
 export default router;

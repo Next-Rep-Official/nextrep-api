@@ -31,17 +31,3 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- Attach trigger to posts table if it doesn't exist
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_trigger
-        WHERE tgname = 'trg_posts_tsvector'
-    ) THEN
-        CREATE TRIGGER trg_posts_tsvector
-        BEFORE INSERT OR UPDATE ON public.posts
-        FOR EACH ROW EXECUTE FUNCTION posts_tsvector_trigger();
-    END IF;
-END
-$$;

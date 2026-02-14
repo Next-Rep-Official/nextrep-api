@@ -81,3 +81,14 @@ export async function searchUsersByTerm(term, { user_id = -1, client = pool } = 
 
     return rows;
 }
+
+// ======== DELETE USERS ======== //
+
+/**
+ * Deletes a user by its id
+ */
+export async function deleteUserById(user_id, { client = pool } = {}) {
+    const { rows } = await (client ?? pool).query('DELETE FROM users WHERE id = $1 RETURNING *', [user_id]);
+
+    if (rows.length === 0) throw new NotFoundError('User not found');
+}

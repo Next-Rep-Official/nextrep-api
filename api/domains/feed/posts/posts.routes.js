@@ -6,15 +6,19 @@ import { Router } from 'express';
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
 import { createPost, getPosts, getPost, searchPosts } from './posts.service.js';
 import { replyToPost, getRepliesFromPost } from '../replies/replies.service.js';
+import { getAttachments, deletePost} from './posts.service.js';
+import multer from 'multer';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/post', requireAuth, async (req, res) => {
+router.post('/post', requireAuth, upload.array('attachments', 3), async (req, res) => {
     try {
         const { id } = req.user;
         const { title, body } = req.body;
+        const attachments = req.files ?? [];
 
-        const response = await createPost(id, title, { body });
+        const response = await createPost(id, title, { body, attachments });
 
         res.status(response.status).json(response.body);
     } catch (err) {
@@ -70,6 +74,35 @@ router.get('/:post_id/reply', acceptAuth, async (req, res) => {
 
     try {
         const response = await getRepliesFromPost(post_id, { user_id });
+        res.status(response.status).json(response.body);
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+// ======== GET POST ATTACHMENTS ========
+
+router.get('/:post_id/attachments', acceptAuth, async (req, res) => {
+    const post_id = Number(req.params.post_id);
+    const user_id = req.user?.id ?? -1;
+
+    try {
+        const response = await getAttachments(post_id, { user_id });
+        res.status(response.status).json(response.body);
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// ======== DELETE POSTS ========
+
+router.delete('/:post_id', requireAuth, async (req, res) => {
+    const post_id = Number(req.params.post_id);
+    const user_id = req.user.id;
+
+    try {
+        const response = await deletePost(user_id, post_id);
         res.status(response.status).json(response.body);
     } catch (err) {
         res.status(500).json({ message: 'Internal server error' });

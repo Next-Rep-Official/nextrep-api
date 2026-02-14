@@ -3,8 +3,8 @@
 
 import { Router } from 'express';
 
-import { signup, login, getUser, searchUsers } from './auth.service.js';
-import { acceptAuth } from '../../../util/middleware.js';
+import { signup, login, getUser, searchUsers, deleteUser } from './auth.service.js';
+import { acceptAuth, requireAuth } from '../../../util/middleware.js';
 const router = Router();
 
 // ======== SIGNUP ======== //
@@ -50,7 +50,19 @@ router.get('/search/:query', acceptAuth, async (req, res) => {
         const response = await searchUsers(req.params.query, { user_id: req.user?.id ?? -1 });
         return res.status(response.status).json(response.body);
     } catch (err) {
-        return res.status(500).json({ message: 'Internal server error' + err.message });
+        return res.status(500).json({ message: 'Internal server error'});
+    }
+});
+
+
+// ======== DELETE USER ======== //
+
+router.delete('/:id', requireAuth, async (req, res) => {
+    try {
+        const response = await deleteUser(req.user.id);
+        return res.status(response.status).json(response.body);
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error' });
     }
 });
 
