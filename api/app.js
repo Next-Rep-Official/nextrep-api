@@ -45,7 +45,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Add Tables
-await initTables().then((value) => value ? console.log('Tables initialized successfully ✅') : console.log('Tables initialization failed ❌'));
+await initTables().then((value) => console.log(value));
 
 // Add Routers
 app.use('/user', user);

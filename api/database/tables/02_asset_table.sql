@@ -7,4 +7,9 @@ CREATE TABLE IF NOT EXISTS public.assets(
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE public.assets ADD CONSTRAINT unique_owner_filename UNIQUE(owner_type, owner_id, filename);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_owner_filename') THEN
+    ALTER TABLE public.assets ADD CONSTRAINT unique_owner_filename UNIQUE(owner_type, owner_id, filename);
+  END IF;
+END $$;

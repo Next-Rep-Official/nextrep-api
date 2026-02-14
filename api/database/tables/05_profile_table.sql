@@ -30,6 +30,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Attach the trigger to the profiles table
+DROP TRIGGER IF EXISTS check_profile_picture_type ON public.profiles;
 CREATE TRIGGER check_profile_picture_type
 BEFORE INSERT OR UPDATE ON profiles
 FOR EACH ROW EXECUTE FUNCTION enforce_profile_picture_type();
@@ -49,6 +50,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger: after a row is deleted from profiles
+DROP TRIGGER IF EXISTS trg_notify_profile_removed ON public.profiles;
 CREATE TRIGGER trg_notify_profile_removed
 AFTER DELETE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION notify_on_profile_removed();

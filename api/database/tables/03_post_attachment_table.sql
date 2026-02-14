@@ -5,7 +5,12 @@ CREATE TABLE IF NOT EXISTS public.post_attachments(
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE public.post_attachments ADD CONSTRAINT unique_post_attachment UNIQUE(post_id, asset_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_post_attachment') THEN
+    ALTER TABLE public.post_attachments ADD CONSTRAINT unique_post_attachment UNIQUE(post_id, asset_id);
+  END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION check_post_attachment_limit()
 RETURNS TRIGGER AS $$
@@ -25,6 +30,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_post_attachment_limit ON public.post_attachments;
 CREATE TRIGGER trg_post_attachment_limit
 BEFORE INSERT ON public.post_attachments
 FOR EACH ROW EXECUTE FUNCTION check_post_attachment_limit();
@@ -40,6 +46,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_notify_post_attachment_removed ON public.post_attachments;
 CREATE TRIGGER trg_notify_post_attachment_removed
 AFTER DELETE ON public.post_attachments
 FOR EACH ROW EXECUTE FUNCTION notify_on_post_attachment_removed();

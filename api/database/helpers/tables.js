@@ -28,8 +28,8 @@ export async function initTables() {
             await pool.query(data);
         }
 
-        return true;
+        return "Tables initialized successfully ✅";
     } catch (err) {
-        return false;
+        return err;
     }
 }

@@ -79,20 +79,23 @@ export async function updateProfilePicture(user_id, profile_picture) {
         }
 
         // Add asset to the database and bucket
-        asset = await addAsset({ file: profile_picture, owner_id: user_id, owner_type: 'user', type: 'profile_picture' });
+        asset = await addAsset(profile_picture, user_id, 'user', 'profile_picture');
 
         // If the asset was not added successfully, throw an error
         if (asset.status !== 200) {
             throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
         }
 
+        const assetId = asset.body.data.asset.id;
+
         // Update the profile picture of the user
-        const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, asset.body.data.id);
+        const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, assetId);
 
         return new CustomResponse(200, 'Profile picture updated successfully', { profile: updatedProfile }).get();
     } catch (err) {
-        if (asset) {
-            await removeAsset({id: asset.body.data.id});
+        const assetId = asset?.body?.data?.asset?.id;
+        if (assetId != null) {
+            await removeAsset(assetId);
         }
 
         if (err.code < 0) {
