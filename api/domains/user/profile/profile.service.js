@@ -1,7 +1,7 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import { getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery, getSelfProfileQuery } from './profile.queries.js';
+import { getProfileByUserIdQuery, getProfileByIdQuery, updateProfilePictureByUserIdQuery, updateProfileBioByUserIdQuery, updateProfilePronounsByUserIdQuery, updateDisplayNameByUserIdQuery } from './profile.queries.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { CustomResponse } from '../../../util/response.js';
