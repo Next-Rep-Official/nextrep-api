@@ -36,11 +36,10 @@ export async function addAsset(file, owner_id, owner_type, type) {
         const asset = await addAssetQuery(file, owner_id, owner_type, type);
         return new CustomResponse(200, 'Asset created successfully!', { asset }).get();
     } catch (err) {
-
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-
+        console.error('[assets] addAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -65,7 +64,7 @@ export async function removeAsset(id) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-
+        console.error('[assets] removeAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -107,7 +106,7 @@ export async function getAsset(id, { user_id = -1 } = {}) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-
+        console.error('[assets] getAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -141,7 +140,7 @@ export async function getUrl(id, { user_id = -1 } = {}) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-
+        console.error('[assets] getUrl 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }
 }

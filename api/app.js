@@ -18,6 +18,8 @@ import config from './config.js';
 
 const app = express();
 
+// Trust the first proxy (e.g. Railway) so X-Forwarded-For is used for client IP and rate limiting works
+app.set('trust proxy', 1);
 
 // ======== ON INIT ======== //
 

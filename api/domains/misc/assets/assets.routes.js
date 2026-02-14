@@ -11,15 +11,24 @@ const router = Router();
 
 // Get an asset by its id
 router.get('/:id', acceptAuth, async (req, res) => {
-    const result = await getAsset(Number(req.params.id), { user_id: req.user?.id ?? -1 });
-    res.status(result.status).json(result.body);
+    try {
+        const result = await getAsset(Number(req.params.id), { user_id: req.user?.id ?? -1 });
+        res.status(result.status).json(result.body);
+    } catch (err) {
+        console.error('[assets] GET /:id 500:', err?.message ?? err, err?.stack);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 router.get('/url/:id', acceptAuth, async (req, res) => {
-    const { id } = req.user ?? -1;
-    
-    const result = await getUrl(Number(req.params.id), { user_id: id });
-    res.status(result.status).json(result.body);
+    try {
+        const user_id = req.user?.id ?? -1;
+        const result = await getUrl(Number(req.params.id), { user_id: Number(user_id) });
+        res.status(result.status).json(result.body);
+    } catch (err) {
+        console.error('[assets] GET /url/:id 500:', err?.message ?? err, err?.stack);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 export default router;
