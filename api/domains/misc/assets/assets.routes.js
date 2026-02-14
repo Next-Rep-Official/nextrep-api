@@ -7,7 +7,7 @@ import multer from 'multer';
 import { acceptAuth } from '../../../util/middleware.js';
 import { getUrl } from './assets.service.js';
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+
 
 // Get an asset by its id
 router.get('/:id', acceptAuth, async (req, res) => {

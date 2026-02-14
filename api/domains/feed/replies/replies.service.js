@@ -2,7 +2,7 @@
 // --------
 
 import { validateType } from '../../../util/validation.js';
-import { addReply, getAllRepliesFromPost, getAllRepliesFromReply } from './replies.queries.js';
+import { addReply, getAllRepliesFromPost, getAllRepliesFromReply, deleteReplyById } from './replies.queries.js';
 import { CustomResponse } from '../../../util/response.js';
 
 // ======== CREATE REPLIES ========
@@ -34,7 +34,7 @@ export async function replyToPost(user_id, post_id, body) {
             return new CustomResponse(err.status, err.message).get();
         }
 
-        return new CustomResponse(500, 'Internal server error' + err.message).get();
+        return new CustomResponse(500, 'Internal server error').get();
     }
 }
 
@@ -109,6 +109,34 @@ export async function getRepliesFromReply(reply_id, { user_id = -1 } = {}) {
         const result = await getAllRepliesFromReply(reply_id, { user_id: user_id ?? -1 });
 
         return new CustomResponse(200, 'Retrieved replies successfully!', { replies: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+
+// ======== DELETE REPLIES ========
+
+/**
+ * Deletes a reply
+ *
+ * @param {number} user_id The id of the user
+ * @param {number} reply_id The id of the reply to delete
+ *
+ * @returns the response
+ */
+export async function deleteReply(user_id, reply_id) {
+    try {
+        validateType(user_id, 'number', 'User ID');
+        validateType(reply_id, 'number', 'Reply ID');
+
+        const reply = await deleteReplyById(user_id, reply_id);
+
+        return new CustomResponse(200, 'Reply deleted successfully!', { reply }).get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();

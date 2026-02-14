@@ -5,6 +5,9 @@ import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder } fro
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
+import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
+import { DatabaseError } from '../../../util/errors.js';
+import { getAttachmentsForPost, deletePostById } from './posts.queries.js';
 
 // ======== CREATE POSTS ======== //
 
@@ -17,7 +20,7 @@ import { validateType } from '../../../util/validation.js';
  *
  * @returns Status and body of response
  */
-export async function createPost(author_id, title, { body = '' } = {}) {
+export async function createPost(author_id, title, { body = '', attachments = [] } = {}) {
     // Create the post
     try {
         if (!author_id || !title) throw new ValidationError('Please input a author_id and title');
@@ -26,7 +29,32 @@ export async function createPost(author_id, title, { body = '' } = {}) {
         validateType(title, 'string', 'Title');
         validateType(body, 'string', 'Body');
 
-        await createNewPost(author_id, title, { body });
+        if (attachments.length > 3) throw new ValidationError('You can only have up to 3 attachments');
+
+        for (const attachment of attachments) {
+            if (attachment.buffer === undefined || attachment.mimetype === undefined) {
+                throw new ValidationError('Attachment must be a file');
+            }
+        }
+
+        let attachment_ids = [];
+
+        for (const attachment of attachments) {
+            const asset = await addAsset(attachment, author_id, 'user', 'post_attachment');
+
+            if (asset.status !== 200) {
+                for (const attachment_id of attachment_ids) {
+                    const response = await removeAsset(attachment_id);
+                    if (response.status !== 200) {
+                        console.error('Failed to remove asset:', response.body);
+                    }
+                }
+                throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
+            }
+            attachment_ids.push(asset.body.data.asset.id);
+        }
+
+        await createNewPost(author_id, title, { body, attachment_ids });
 
         return new CustomResponse(200, 'Post created successfully!').get();
     } catch (err) {
@@ -118,6 +146,60 @@ export async function getPosts(order, { limit = 20, user_id = -1 } = {}) {
         const result = await getPostsByOrder(order, { user_id: user_id ?? -1, limit: limit ?? 20 });
 
         return new CustomResponse(200, 'Successfully found posts!', { posts: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+
+// ======== GET POST ATTACHMENTS ======== //
+
+/**
+ * Get all attachments for a post
+ *
+ * @param {number} post_id The id of the post
+ * @param {number} user_id The id of the user requesting the attachments
+ *
+ * @returns Status and body of response
+ */
+export async function getAttachments(post_id, { user_id = -1 } = {}) {
+    try {
+        validateType(post_id, 'number', 'Post ID');
+        validateType(user_id, 'number', 'User ID');
+
+        const attachments = await getAttachmentsForPost(post_id, { user_id: user_id ?? -1 });
+
+        return new CustomResponse(200, 'Successfully found attachments!', { attachments }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+// ======== DELETE POSTS ======== //
+
+/**
+ * Deletes a post
+ *
+ * @param {number} post_id The id of the post to delete
+ * @param {number} user_id The id of the user deleting the post
+ *
+ * @returns Status and body of response
+ */
+export async function deletePost(user_id, post_id) {
+    try {
+        validateType(post_id, 'number', 'Post ID');
+        validateType(user_id, 'number', 'User ID');
+
+        await deletePostById(user_id, post_id);
+
+        return new CustomResponse(200, 'Post deleted successfully!').get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();

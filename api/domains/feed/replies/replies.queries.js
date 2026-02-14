@@ -78,3 +78,17 @@ export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = 
 
     return rows;
 }
+
+
+// ======== DELETE REPLIES ========
+
+/**
+ * Deletes a reply
+ */
+export async function deleteReplyById(user_id = -1, reply_id, { client = pool } = {}) {
+    const { rows } = await (client ?? pool).query('DELETE FROM replies WHERE id = $1 AND author_id = $2 RETURNING *', [reply_id, user_id ?? -1]);
+
+    if (rows.length === 0) throw new NotFoundError('Reply not found');
+
+    return rows[0];
+}
