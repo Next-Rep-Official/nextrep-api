@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 
-import { signup, login, getUser, searchUsers, deleteUser } from './auth.service.js';
+import { signup, login, getUser, searchUsers, deleteUser, updateUserVisibility } from './auth.service.js';
 import { acceptAuth, requireAuth } from '../../../util/middleware.js';
 const router = Router();
 
@@ -54,6 +54,7 @@ router.get('/search/:query', acceptAuth, async (req, res) => {
     }
 });
 
+
 // ======== UPDATE USER ======== //
 
 router.put('/visibility', requireAuth, async (req, res) => {
@@ -65,6 +66,7 @@ router.put('/visibility', requireAuth, async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 // ======== DELETE USER ======== //
 
