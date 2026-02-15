@@ -4,7 +4,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm, deleteUserById } from './auth.queries.js';
+import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm, deleteUserById, updateUserVisibilityById } from './auth.queries.js';
 
 import config from '../../../config.js';
 
@@ -176,6 +176,31 @@ export async function searchUsers(query, { user_id = -1 } = {}) {
     }
 }
 
+
+// ======== UPDATE USER ======== //
+
+/**
+ * Endpoint to update a user by its id
+ * 
+ * @param {number} id The id of the user to update
+ * @param {string} visibility The visibility of the user
+ */
+export async function updateUserVisibility(id, visibility) {
+    try {
+        validateType(id, 'number', 'ID');
+        validateType(visibility, 'string', 'Visibility');
+
+        const updatedUser = await updateUserVisibilityById(id, visibility);
+
+        return new CustomResponse(200, 'User visibility updated successfully!', { user: updatedUser }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
 // ======== DELETE USER ======== //
 
 /**

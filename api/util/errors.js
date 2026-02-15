@@ -168,3 +168,15 @@ export class InternalServerError extends BackendError {
         super(message, { status: 500, code: -400 });
     }
 }
+
+// ======== BAD REQUEST ERROR ========
+
+/**
+ * Extends backend error-- For bad request errors
+ * WILL USE CODE -500 FOR BAD REQUEST ERRORS
+ */
+export class BadRequestError extends BackendError {
+    constructor(message) {
+        super(message, { status: 400, code: -500 });
+    }
+}

@@ -3,7 +3,7 @@
 
 import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder } from './posts.queries.js';
 import { CustomResponse } from '../../../util/response.js';
-import { ValidationError } from '../../../util/errors.js';
+import { ValidationError, BadRequestError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { DatabaseError } from '../../../util/errors.js';
@@ -20,7 +20,7 @@ import { getAttachmentsForPost, deletePostById } from './posts.queries.js';
  *
  * @returns Status and body of response
  */
-export async function createPost(author_id, title, { body = '', attachments = [] } = {}) {
+export async function createPost(author_id, title, { body = '', attachments = [], visibility = 'private' } = {}) {
     // Create the post
     try {
         if (!author_id || !title) throw new ValidationError('Please input a author_id and title');
@@ -28,8 +28,13 @@ export async function createPost(author_id, title, { body = '', attachments = []
         validateType(author_id, 'number', 'Author ID');
         validateType(title, 'string', 'Title');
         validateType(body, 'string', 'Body');
+        validateType(visibility, 'string', 'Visibility');
 
         if (attachments.length > 3) throw new ValidationError('You can only have up to 3 attachments');
+
+        if (visibility !== 'private' && visibility !== 'public') {
+            throw new BadRequestError('Invalid visibility');
+        }
 
         for (const attachment of attachments) {
             if (attachment.buffer === undefined || attachment.mimetype === undefined) {
@@ -54,7 +59,7 @@ export async function createPost(author_id, title, { body = '', attachments = []
             attachment_ids.push(asset.body.data.asset.id);
         }
 
-        await createNewPost(author_id, title, { body, attachment_ids });
+        await createNewPost(author_id, title, { body, attachment_ids, visibility });
 
         return new CustomResponse(200, 'Post created successfully!').get();
     } catch (err) {

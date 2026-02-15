@@ -4,7 +4,7 @@
 import pool from '../../../database/db.js';
 import { runTransaction } from '../../../database/helpers/transaction.js';
 import { createNewProfileQuery } from '../profile/profile.queries.js';
-import { NotFoundError } from '../../../util/errors.js';
+import { NotFoundError, BadRequestError } from '../../../util/errors.js';
 
 
 
@@ -81,6 +81,26 @@ export async function searchUsersByTerm(term, { user_id = -1, client = pool } = 
 
     return rows;
 }
+
+
+// ======== UPDATE USERS ======== //
+
+/**
+ * Updates the visibility of a user by its id
+ */
+export async function updateUserVisibilityById(id, visibility, { client = pool } = {}) {
+    if (visibility !== 'private' && visibility !== 'public') {
+        throw new BadRequestError('Invalid visibility');
+    }
+
+    const { rows } = await (client ?? pool).query('UPDATE users SET visibility = $1 WHERE id = $2 RETURNING *', [visibility, id]);
+    if (rows.length === 0) {
+        throw new NotFoundError('User not found');
+    }
+
+    return rows[0];
+}
+
 
 // ======== DELETE USERS ======== //
 

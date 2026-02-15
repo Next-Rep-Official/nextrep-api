@@ -15,10 +15,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/post', requireAuth, upload.array('attachments', 3), async (req, res) => {
     try {
         const { id } = req.user;
-        const { title, body } = req.body;
+        const { title, body, visibility } = req.body;
         const attachments = req.files ?? [];
 
-        const response = await createPost(id, title, { body, attachments });
+        const response = await createPost(id, title, { body, attachments, visibility });
 
         res.status(response.status).json(response.body);
     } catch (err) {

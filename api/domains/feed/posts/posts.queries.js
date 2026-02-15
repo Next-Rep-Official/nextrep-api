@@ -12,9 +12,9 @@ import { removeAsset } from '../../misc/assets/assets.service.js';
 /**
  * Creates a new post and pushes it to the database
  */
-export async function createNewPost(user_id, title, { body = '', attachment_ids = [], client } = {}) {
+export async function createNewPost(user_id, title, { body = '', attachment_ids = [], visibility = 'private', client } = {}) {
     const result = await runTransaction(async (c) => {
-        const { rows } = await c.query('INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING *', [user_id, title, body ?? '']);
+        const { rows } = await c.query('INSERT INTO posts (author_id, title, body, visibility) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, title, body ?? '', visibility ?? 'private']);
 
         if (rows.length === 0) throw new DatabaseError('Failed to create post', { code: -1, status: 500 });
 

@@ -54,6 +54,17 @@ router.get('/search/:query', acceptAuth, async (req, res) => {
     }
 });
 
+// ======== UPDATE USER ======== //
+
+router.put('/visibility', requireAuth, async (req, res) => {
+    try {
+        const { visibility } = req.body;
+        const response = await updateUserVisibility(req.user.id, visibility);
+        return res.status(response.status).json(response.body);
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 // ======== DELETE USER ======== //
 
