@@ -36,15 +36,6 @@ router.post('/login', async (req, res) => {
 
 // ======== GET USERS ======== //
 
-router.get('/:id', acceptAuth, async (req, res) => {
-    try {
-        const response = await getUser(Number(req.params.id), { user_id: req.user?.id ?? -1 });
-        return res.status(response.status).json(response.body);
-    } catch (err) {
-        return res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
 router.get('/search/:query', acceptAuth, async (req, res) => {
     try {
         const response = await searchUsers(req.params.query, { user_id: req.user?.id ?? -1 });
@@ -54,6 +45,15 @@ router.get('/search/:query', acceptAuth, async (req, res) => {
     }
 });
 
+
+router.get('/:id', acceptAuth, async (req, res) => {
+    try {
+        const response = await getUser(Number(req.params.id), { user_id: req.user?.id ?? -1 });
+        return res.status(response.status).json(response.body);
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 // ======== UPDATE USER ======== //
 
