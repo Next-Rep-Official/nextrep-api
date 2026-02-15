@@ -58,7 +58,7 @@ export async function getUserFromKey(key, { client = pool } = {}) {
 export async function getUserById(id, { user_id = -1, client = pool } = {}) {
     // Get the rows from the database that match the id and are visible to that user
     const { rows } = await (client ?? pool).query(
-        "SELECT id, username FROM users WHERE id = $1 AND (visibility = 'public' OR id = $2) LIMIT 1",
+        "SELECT id, username, visibility FROM users WHERE id = $1 AND (visibility = 'public' OR id = $2) LIMIT 1",
         [id, user_id ?? -1]
     );
 
