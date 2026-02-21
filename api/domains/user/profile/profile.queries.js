@@ -27,7 +27,15 @@ export async function createNewProfileQuery(user_id, { client = pool } = {}) {
  * Gets a profile by its user_id
  */
 export async function getProfileByUserIdQuery(user_id, { client = pool } = {}) {
-    const { rows } = await (client ?? pool).query('SELECT * FROM profiles WHERE user_id = $1 LIMIT 1', [user_id]);
+    const { rows } = await (client ?? pool).query(`
+        SELECT p.*, json_build_object(
+            'usernmae', u.username,
+        ) AS user
+        FROM profiles p
+        LEFT JOIN users u ON u.id = p.user_id
+        WHERE p.user_id = $1 AND (u.visibility = 'public' OR p.user_id = $2)
+        LIMIT 1`, [user_id, user_id ?? -1]
+    )
 
     if (rows.length === 0) {
         throw new NotFoundError('Profile not found');
@@ -40,12 +48,13 @@ export async function getProfileByUserIdQuery(user_id, { client = pool } = {}) {
  */
 export async function getProfileByIdQuery(id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(
-        `SELECT p.*
-         FROM profiles p
-         INNER JOIN users u ON u.id = p.user_id
-         WHERE p.id = $1 AND (u.visibility = 'public' OR p.user_id = $2)
-         LIMIT 1`,
-        [id, user_id ?? -1]
+        `SELECT p.*, json_build_object(
+            'username', u.username,
+        ) AS user
+        FROM profiles p
+        LEFT JOIN users u ON u.id = p.user_id
+        WHERE p.id = $1 AND (u.visibility = 'public' OR p.user_id = $2)
+        LIMIT 1`, [id, user_id ?? -1]
     );
 
     if (rows.length === 0) {

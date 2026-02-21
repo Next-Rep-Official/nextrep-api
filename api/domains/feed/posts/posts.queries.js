@@ -34,11 +34,37 @@ export async function createNewPost(user_id, title, { body = '', attachment_ids 
 // ======== GET POSTS ======== //
 
 /**
- * Gets a post by id
+ * Gets a post by id, with author (user + profile) and attachments
  */
 export async function getPostById(post_id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(
-        "SELECT * FROM posts WHERE id = $1 AND (visibility = 'public' OR author_id = $2) LIMIT 1",
+        `
+        SELECT p.*,
+               json_build_object(
+                   'display_name', pr.display_name,
+                   'profile_picture', pr.profile_picture,
+                   'pronouns', pr.pronouns
+               ) AS author,
+               (
+                   SELECT COALESCE(
+                       json_agg(json_build_object(
+                           'id', a.id,
+                           'filename', a.filename,
+                           'type', a.type,
+                           'created_at', a.created_at
+                       ) ORDER BY pa.created_at),
+                       '[]'
+                   )
+                   FROM post_attachments pa
+                   JOIN assets a ON a.id = pa.asset_id
+                   WHERE pa.post_id = p.id
+               ) AS attachments
+        FROM posts p
+        JOIN users u ON u.id = p.author_id
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE p.id = $1 AND (p.visibility = 'public' OR p.author_id = $2)
+        LIMIT 1
+        `,
         [post_id, user_id ?? -1]
     );
 
@@ -61,13 +87,33 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
         .join(' & ');
 
     const query = `
-        SELECT *,
-        ts_rank(document, to_tsquery('english', $1)) 
-        AS rank 
-        FROM posts 
-        WHERE document @@ to_tsquery('english', $1) 
-        AND (visibility = 'public' OR author_id = $2) 
-        ORDER BY rank DESC 
+        SELECT p.*,
+               ts_rank(p.document, to_tsquery('english', $1)) AS rank,
+               json_build_object(
+                   'display_name', pr.display_name,
+                   'profile_picture', pr.profile_picture,
+                   'pronouns', pr.pronouns
+               ) AS author,
+               (
+                   SELECT COALESCE(
+                       json_agg(json_build_object(
+                           'id', a.id,
+                           'filename', a.filename,
+                           'type', a.type,
+                           'created_at', a.created_at
+                       ) ORDER BY pa.created_at),
+                       '[]'
+                   )
+                   FROM post_attachments pa
+                   JOIN assets a ON a.id = pa.asset_id
+                   WHERE pa.post_id = p.id
+               ) AS attachments
+        FROM posts p
+        JOIN users u ON u.id = p.author_id
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE p.document @@ to_tsquery('english', $1)
+          AND (p.visibility = 'public' OR p.author_id = $2)
+        ORDER BY rank DESC
         LIMIT $3;
     `;
 
@@ -90,8 +136,31 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
     
     const { rows } = await (client ?? pool).query(
         `
-            SELECT * FROM posts WHERE (visibility = 'public' OR author_id = $1) 
-            ORDER BY created_at ${sortOrder} 
+            SELECT p.*,
+                   json_build_object(
+                       'display_name', pr.display_name,
+                       'profile_picture', pr.profile_picture,
+                       'pronouns', pr.pronouns
+                   ) AS author,
+                   (
+                       SELECT COALESCE(
+                           json_agg(json_build_object(
+                               'id', a.id,
+                               'filename', a.filename,
+                               'type', a.type,
+                               'created_at', a.created_at
+                           ) ORDER BY pa.created_at),
+                           '[]'
+                       )
+                       FROM post_attachments pa
+                       JOIN assets a ON a.id = pa.asset_id
+                       WHERE pa.post_id = p.id
+                   ) AS attachments
+            FROM posts p
+            JOIN users u ON u.id = p.author_id
+            LEFT JOIN profiles pr ON pr.user_id = u.id
+            WHERE (p.visibility = 'public' OR p.author_id = $1)
+            ORDER BY p.created_at ${sortOrder}
             LIMIT $2
         `,
         [user_id ?? -1, limit ?? 20]

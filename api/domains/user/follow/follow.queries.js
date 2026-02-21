@@ -57,12 +57,21 @@ export async function removeFollowFromUser(user_id, followed_id, { client } = {}
  */
 export async function getFollowersFromUser(id, { client, user_id = -1 } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT f.follower_id
+        SELECT fu.id AS follower_id,
+               fu.username,
+               json_build_object(
+                   'display_name', pr.display_name,
+                   'username', fu.username,
+                   'profile_picture', pr.profile_picture,
+                   'pronouns', pr.pronouns
+               ) AS user
         FROM follows f
         JOIN users u ON u.id = f.followed_id
+        JOIN users fu ON fu.id = f.follower_id
+        LEFT JOIN profiles pr ON pr.user_id = f.follower_id
         WHERE f.followed_id = $1
-        AND (u.visibility = 'public' OR f.followed_id = $2)
-  `, [id, user_id ?? -1]); 
+          AND (u.visibility = 'public' OR f.followed_id = $2)
+    `, [id, user_id ?? -1]);
 
     return rows;
 }
@@ -72,12 +81,21 @@ export async function getFollowersFromUser(id, { client, user_id = -1 } = {}) {
  */
 export async function getFollowingFromUser(id, { client, user_id = -1 } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT f.followed_id
+        SELECT fu.id AS followed_id,
+               fu.username,
+               json_build_object(
+                   'display_name', pr.display_name,
+                   'username', fu.username,
+                   'profile_picture', pr.profile_picture,
+                   'pronouns', pr.pronouns
+               ) AS user
         FROM follows f
         JOIN users u ON u.id = f.follower_id
+        JOIN users fu ON fu.id = f.followed_id
+        LEFT JOIN profiles pr ON pr.user_id = f.followed_id
         WHERE f.follower_id = $1
-        AND (u.visibility = 'public' OR f.follower_id = $2)
-  `, [id, user_id ?? -1]); 
+          AND (u.visibility = 'public' OR f.follower_id = $2)
+    `, [id, user_id ?? -1]);
 
     return rows;
 }

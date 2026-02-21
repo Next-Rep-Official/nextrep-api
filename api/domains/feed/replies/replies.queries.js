@@ -31,7 +31,11 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
         const { rows: reply_rows } = await c.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, rows[0].post_id, body, parent_id ?? null]);
 
-        await c.query(`UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1`, [rows[0].post_id]);
+        if (!parent_id || parent_id === null) {
+            await c.query(`UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1`, [rows[0].post_id]);
+        } else {
+            await c.query(`UPDATE replies SET replies_count = replies_count + 1 WHERE id = $1`, [parent_id]);
+        }
 
         return reply_rows;
     }, { client });
@@ -45,32 +49,42 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
 /**
  * Pull all replies to a post
+ * returns the replies and author information
  */
 export async function getAllRepliesFromPost(post_id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT r.*
+        SELECT r.*, json_build_object(
+            'display_name', pr.display_name,
+            'profile_picture', pr.profile_picture,
+            'pronouns', pr.pronouns
+        ) AS author
         FROM replies r
         JOIN posts p ON p.id = r.post_id
-        WHERE r.post_id = $1
-        AND (p.visibility = 'public' OR p.author_id = $2)
+        JOIN users u ON u.id = r.author_id
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE r.post_id = $1 AND (p.visibility = 'public' OR p.author_id = $2)
         ORDER BY r.created_at DESC;`, 
     [post_id, user_id ?? -1]);
-
-    if (rows.length === 0) throw new NotFoundError('No replies found');
 
     return rows;
 }
 
 /**
  * Gets all replies from another reply
+ * returns the replies and author information
  */
 export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT r.*
+        SELECT r.*, json_build_object(
+            'display_name', pr.display_name,
+            'profile_picture', pr.profile_picture,
+            'pronouns', pr.pronouns
+        ) AS author
         FROM replies r
         JOIN posts p ON p.id = r.post_id
-        WHERE r.parent_id = $1
-        AND (p.visibility = 'public' OR p.author_id = $2)
+        JOIN users u ON u.id = r.author_id
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE r.parent_id = $1 AND (p.visibility = 'public' OR p.author_id = $2)
         ORDER BY r.created_at DESC;`,
     [reply_id, user_id ?? -1]);
 

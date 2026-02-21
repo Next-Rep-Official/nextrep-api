@@ -4,7 +4,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { createNewUser, getUserFromKey, getUserById, searchUsersByTerm, deleteUserById, updateUserVisibilityById } from './auth.queries.js';
+import { createNewUser, getUserDataFromKey, getUserById, searchUsersByTerm, deleteUserById, updateUserVisibilityById } from './auth.queries.js';
 
 import config from '../../../config.js';
 
@@ -92,7 +92,7 @@ export async function login(key, password) {
         validateType(key, 'string', 'Key');
         validateType(password, 'string', 'Password');
 
-        const user = await getUserFromKey(key.toLowerCase());
+        const user = await getUserDataFromKey(key.toLowerCase());
 
         const passwordValid = await bcrypt.compare(password, user.hashed_password);
         if (!passwordValid) {

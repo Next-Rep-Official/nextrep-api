@@ -45,7 +45,7 @@ app.use(cors());
 // app.use(limiter);
 
 // Add Tables
-await initTables().then((value) => console.log(value));
+// await initTables().then((value) => console.log(value));
 
 // Add Routers
 app.use('/user', user);

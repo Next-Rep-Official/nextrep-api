@@ -120,7 +120,7 @@ export async function searchPosts(search_term, { user_id = -1, limit = 20 } = {}
         if ((limit ?? 20) < 1) throw new ValidationError('Limit must be at least 1');
 
         const result = await getPostsBySearchTerm(search_term, { user_id: user_id ?? -1, limit: limit ?? 20 });
-
+        
         return new CustomResponse(200, 'Successfully found posts!', { posts: result }).get();
     } catch (err) {
         if (err.code < 0) {

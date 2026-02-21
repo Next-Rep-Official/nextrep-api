@@ -40,7 +40,7 @@ export async function createNewUser(username, email, hashed_password, { client =
 /**
  * Get the user's info that is correlated with the key
  */
-export async function getUserFromKey(key, { client = pool } = {}) {
+export async function getUserDataFromKey(key, { client = pool } = {}) {
     // Get the rows from the database that match the key
     const { rows } = await (client ?? pool).query('SELECT * FROM users WHERE email = $1 OR username = $1 LIMIT 1', [key]);
 
@@ -54,11 +54,19 @@ export async function getUserFromKey(key, { client = pool } = {}) {
 
 /**
  * Gets a user by its id
+ * returns the user and profile information
  */
 export async function getUserById(id, { user_id = -1, client = pool } = {}) {
     // Get the rows from the database that match the id and are visible to that user
     const { rows } = await (client ?? pool).query(
-        "SELECT id, username, visibility FROM users WHERE id = $1 AND (visibility = 'public' OR id = $2) LIMIT 1",
+        `SELECT u.id, u.username, u.visibility, json_build_object(
+            'display_name', pr.display_name,
+            'profile_picture', pr.profile_picture,
+            'pronouns', pr.pronouns
+        ) AS profile
+        FROM users u
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE u.id = $1 AND (u.visibility = 'public' OR u.id = $2) LIMIT 1`,
         [id, user_id ?? -1]
     );
 
@@ -72,11 +80,25 @@ export async function getUserById(id, { user_id = -1, client = pool } = {}) {
 
 /**
  * Searches for users by a search term
+ * returns the user and profile information
  */
 export async function searchUsersByTerm(term, { user_id = -1, client = pool } = {}) {
+    const trimmed = term.trim();
+
     const { rows } = await (client ?? pool).query(
-        "SELECT id, username FROM users WHERE username ILIKE $1 AND (visibility = 'public' OR id = $2) LIMIT 10",
-        ["%" + term.trim() + "%", user_id ?? -1]
+        `SELECT u.id, u.username,
+                json_build_object(
+                    'display_name', pr.display_name,
+                    'profile_picture', pr.profile_picture,
+                    'pronouns', pr.pronouns
+                ) AS profile
+        FROM users u
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE (u.visibility = 'public' OR u.id = $2)
+            AND (u.username ILIKE '%' || $1 || '%' OR similarity(u.username, $1) > 0.2)
+        ORDER BY similarity(u.username, $1) DESC NULLS LAST
+        LIMIT 10`,
+        [trimmed, user_id ?? -1]
     );
 
     return rows;
