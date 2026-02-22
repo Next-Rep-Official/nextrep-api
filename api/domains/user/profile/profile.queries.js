@@ -29,7 +29,7 @@ export async function createNewProfileQuery(user_id, { client = pool } = {}) {
 export async function getProfileByUserIdQuery(user_id, { client = pool } = {}) {
     const { rows } = await (client ?? pool).query(`
         SELECT p.*, json_build_object(
-            'usernmae', u.username,
+            'username', u.username
         ) AS user
         FROM profiles p
         LEFT JOIN users u ON u.id = p.user_id
@@ -49,7 +49,7 @@ export async function getProfileByUserIdQuery(user_id, { client = pool } = {}) {
 export async function getProfileByIdQuery(id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(
         `SELECT p.*, json_build_object(
-            'username', u.username,
+            'username', u.username
         ) AS user
         FROM profiles p
         LEFT JOIN users u ON u.id = p.user_id
