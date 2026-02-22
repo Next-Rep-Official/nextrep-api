@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
-import { replyToReply, getRepliesFromReply } from './replies.service.js';
+import { replyToReply, getRepliesFromReply, deleteReply } from './replies.service.js';
 
 const router = Router();
 
