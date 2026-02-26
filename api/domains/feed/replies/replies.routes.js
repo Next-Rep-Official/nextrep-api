@@ -24,6 +24,22 @@ router.post('/:reply_id/reply', requireAuth, async (req, res) => {
     }
 });
 
+router.put('/:reply_id/like', requireAuth, async (req, res) => {
+    const reply_id = Number(req.params.reply_id);
+    const user_id = req.user.id;
+
+    try {
+        const response = await likeReply(user_id, reply_id);
+        res.status(response.status).json(response.body);
+    } catch (err) {
+        if (err.code < 0) {
+            return res.status(err.status).json({ message: err.message });
+        }
+
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 // ======== GET REPLIES ========
 

@@ -69,6 +69,31 @@ export async function replyToReply(user_id, reply_id, body) {
     }
 }
 
+/**
+ * Likes a reply
+ *
+ * @param {number} user_id The ID of the user liking the reply
+ * @param {number} reply_id The ID of the reply to like
+ *
+ * @returns Status and body of response
+ */
+export async function likeReply(user_id, reply_id) {
+    try {
+        validateType(user_id, 'number', 'User ID');
+        validateType(reply_id, 'number', 'Reply ID');
+
+        const result = await likeReplyById(user_id, reply_id);
+
+        return new CustomResponse(200, 'Reply liked successfully!', { reply: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
 
 // ======== GET REPLIES ========
 

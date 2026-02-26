@@ -1,7 +1,7 @@
 // First created Week 1 by Zane Beidas
 // --------
 
-import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder } from './posts.queries.js';
+import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder, likePostById } from './posts.queries.js';
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError, BadRequestError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
@@ -44,8 +44,10 @@ export async function createPost(author_id, title, { body = '', attachments = []
 
         let attachment_ids = [];
 
+        const post = await createNewPost(author_id, title, { body, attachment_ids, visibility });
+
         for (const attachment of attachments) {
-            const asset = await addAsset(attachment, author_id, 'user', 'post_attachment');
+            const asset = await addAsset(attachment, post[0].id, 'post', 'post_attachment');
 
             if (asset.status !== 200) {
                 for (const attachment_id of attachment_ids) {
@@ -58,8 +60,6 @@ export async function createPost(author_id, title, { body = '', attachments = []
             }
             attachment_ids.push(asset.body.data.asset.id);
         }
-
-        await createNewPost(author_id, title, { body, attachment_ids, visibility });
 
         return new CustomResponse(200, 'Post created successfully!').get();
     } catch (err) {
@@ -74,6 +74,31 @@ export async function createPost(author_id, title, { body = '', attachments = []
 
         return new CustomResponse(500, 'Internal server error').get();
     }
+}
+
+/**
+ * Likes a post
+ * 
+ * @param {number} user_id The ID of the user liking the post
+ * @param {number} post_id The ID of the post to like
+ *
+ * @returns Status and body of response
+ */
+export async function likePost(user_id, post_id) {
+    try {
+        validateType(user_id, 'number', 'User ID');
+        validateType(post_id, 'number', 'Post ID');
+
+        const result = await likePostById(user_id, post_id);
+
+        return new CustomResponse(200, 'Post liked successfully!', { post: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    } 
 }
 
 

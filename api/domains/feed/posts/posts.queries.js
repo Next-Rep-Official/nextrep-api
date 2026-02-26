@@ -30,6 +30,17 @@ export async function createNewPost(user_id, title, { body = '', attachment_ids 
     return result;
 }
 
+/**
+ * Likes a post by id
+ */
+export async function likePostById(user_id, post_id, { client = pool } = {}) {
+    const { rows } = await (client ?? pool).query(`UPDATE posts SET likes = likes + 1 WHERE (id = $1 AND (visibility = 'public' OR author_id = $2)) RETURNING *`, [post_id, user_id]);
+
+    if (rows.length === 0) throw new DatabaseError('Failed to like post', { code: -1, status: 500 });
+
+    return rows[0];
+}
+
 
 // ======== GET POSTS ======== //
 
@@ -42,6 +53,7 @@ export async function getPostById(post_id, { user_id = -1, client = pool } = {})
         SELECT p.*,
                json_build_object(
                    'display_name', pr.display_name,
+                   'username', u.username,
                    'profile_picture', pr.profile_picture,
                    'pronouns', pr.pronouns
                ) AS author,
@@ -91,6 +103,7 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
                ts_rank(p.document, to_tsquery('english', $1)) AS rank,
                json_build_object(
                    'display_name', pr.display_name,
+                   'username', u.username,
                    'profile_picture', pr.profile_picture,
                    'pronouns', pr.pronouns
                ) AS author,
@@ -129,7 +142,7 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
 }
 
 /**
- * Gets the latest uploaded posts
+ * Gets the latest uploaded posts from a user
  */
 export async function getPostsByOrder(order, { user_id = -1, limit = 20, client = pool } = {}) {
     const sortOrder = order === 'ascending' ? 'ASC' : 'DESC';
@@ -139,6 +152,7 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
             SELECT p.*,
                    json_build_object(
                        'display_name', pr.display_name,
+                       'username', u.username,
                        'profile_picture', pr.profile_picture,
                        'pronouns', pr.pronouns
                    ) AS author,
@@ -164,6 +178,50 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
             LIMIT $2
         `,
         [user_id ?? -1, limit ?? 20]
+    );
+
+    if (rows.length === 0) {
+        throw new NotFoundError('No posts found');
+    }
+
+    return rows;
+}
+
+/**
+ * Gets posts by a user's id
+ */
+export async function getPostsByAuthorId(author_id, { user_id = -1, order = 'descending', limit = 20, client = pool } = {}) {
+    const sortOrder = order === 'ascending' ? 'ASC' : 'DESC';
+    
+    const { rows } = await (client ?? pool).query(
+        `SELECT p.*,
+               json_build_object(
+                   'display_name', pr.display_name,
+                   'username', u.username,
+                   'profile_picture', pr.profile_picture,
+                   'pronouns', pr.pronouns
+               ) AS author,
+               (
+                   SELECT COALESCE(
+                       json_agg(json_build_object(
+                           'id', a.id,
+                           'filename', a.filename,
+                           'type', a.type,
+                           'created_at', a.created_at
+                       ) ORDER BY pa.created_at),
+                       '[]'
+                   )
+                   FROM post_attachments pa
+                   JOIN assets a ON a.id = pa.asset_id
+                   WHERE pa.post_id = p.id
+               ) AS attachments
+         FROM posts p
+        JOIN users u ON u.id = p.author_id
+        LEFT JOIN profiles pr ON pr.user_id = u.id
+        WHERE p.author_id = $1 AND (p.visibility = 'public' OR p.author_id = $2)
+        ORDER BY p.created_at ${sortOrder}
+        LIMIT $2`,
+        [author_id, user_id ?? -1, limit ?? 20]
     );
 
     if (rows.length === 0) {

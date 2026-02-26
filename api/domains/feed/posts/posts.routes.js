@@ -4,7 +4,7 @@
 import { Router } from 'express';
 
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
-import { createPost, getPosts, getPost, searchPosts } from './posts.service.js';
+import { createPost, getPosts, getPost, searchPosts, likePost } from './posts.service.js';
 import { replyToPost, getRepliesFromPost } from '../replies/replies.service.js';
 import { getAttachments, deletePost} from './posts.service.js';
 import multer from 'multer';
@@ -22,6 +22,22 @@ router.post('/post', requireAuth, upload.array('attachments', 3), async (req, re
 
         res.status(response.status).json(response.body);
     } catch (err) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.put('/:post_id/like', requireAuth, async (req, res) => {
+    try {
+        const post_id = Number(req.params.post_id);
+        const user_id = req.user.id;
+
+        const response = await likePost(user_id, post_id);
+        res.status(response.status).json(response.body);
+    } catch (err) {
+        if (err.code < 0) {
+            return res.status(err.status).json({ message: err.message });
+        }
+
         return res.status(500).json({ message: 'Internal server error' });
     }
 });

@@ -45,6 +45,26 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
     return result[0];
 }
 
+
+// ======== LIKE REPLIES ========
+
+/**
+ * Likes a reply
+ */
+export async function likeReplyById(user_id, reply_id, { client = pool } = {}) {
+    const { rows } = await (client ?? pool).query(`
+        UPDATE replies r 
+        JOIN posts p ON p.id = r.post_id AND p.author_id = $2 
+        SET likes = likes + 1 WHERE (r.id = $1 AND (p.visibility = 'public' OR p.author_id = $2)) 
+        RETURNING *
+        `, [reply_id, user_id]);
+
+    if (rows.length === 0) throw new DatabaseError('Failed to like reply', { code: -1, status: 500 });
+
+    return rows[0];
+}
+
+
 // ======== GET REPLIES ========
 
 /**
@@ -55,6 +75,7 @@ export async function getAllRepliesFromPost(post_id, { user_id = -1, client = po
     const { rows } = await (client ?? pool).query(`
         SELECT r.*, json_build_object(
             'display_name', pr.display_name,
+            'username', u.username,
             'profile_picture', pr.profile_picture,
             'pronouns', pr.pronouns
         ) AS author
@@ -77,6 +98,7 @@ export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = 
     const { rows } = await (client ?? pool).query(`
         SELECT r.*, json_build_object(
             'display_name', pr.display_name,
+            'username', u.username,
             'profile_picture', pr.profile_picture,
             'pronouns', pr.pronouns
         ) AS author
@@ -100,9 +122,19 @@ export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = 
  * Deletes a reply
  */
 export async function deleteReplyById(user_id, reply_id, { client = pool } = {}) {
+    const result = await runTransaction(async (c) => {
+        const { rows } = await c.query('DELETE FROM replies WHERE id = $1 AND author_id = $2 RETURNING *', [reply_id, user_id]);
+
+        if (rows[0].parent_id === null) {
+            await c.query('UPDATE posts SET replies_count = replies_count - 1 WHERE id = $1', [rows[0].post_id]);
+        } else {
+            await c.query('UPDATE replies SET replies_count = replies_count - 1 WHERE id = $1', [rows[0].parent_id]);
+        }
+
+        return rows[0];
+    }, { client: (client ?? pool) });
+
     const { rows } = await (client ?? pool).query('DELETE FROM replies WHERE id = $1 AND author_id = $2 RETURNING *', [reply_id, user_id]);
 
-    if (rows.length === 0) throw new NotFoundError('Reply not found');
-
-    return rows[0];
+    return result;
 }
