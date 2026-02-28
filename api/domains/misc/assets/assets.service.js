@@ -23,7 +23,7 @@ import { CustomResponse } from '../../../util/response.js';
  *
  * @returns {Promise<Object>} The created asset
  */
-export async function addAsset(file, owner_id, owner_type, type) {
+export async function addAsset(file, owner_id, owner_type, type, { client = pool } = {}) {
     try {
         validateType(owner_id, 'number', 'Owner ID');
         validateType(owner_type, 'string', 'Owner Type');
@@ -33,13 +33,13 @@ export async function addAsset(file, owner_id, owner_type, type) {
             throw new ValidationError('Invalid file');
         }
 
-        const asset = await addAssetQuery(file, owner_id, owner_type, type);
+        const asset = await addAssetQuery(file, owner_id, owner_type, type, { client: client ?? pool });
         return new CustomResponse(200, 'Asset created successfully!', { asset }).get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-        console.error('[assets] addAsset 500:', err?.message ?? err, err?.stack);
+
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -54,11 +54,11 @@ export async function addAsset(file, owner_id, owner_type, type) {
  *
  * @returns {Promise<Object>} The removed asset
  */
-export async function removeAsset(id) {
+export async function removeAsset(id, { client = pool } = {}) {
     try {
         validateType(id, 'number', 'ID');
 
-        await removeAssetQuery(id);
+        await removeAssetQuery(id, { client: client ?? pool });
         return new CustomResponse(200, 'Asset removed successfully!').get();
     } catch (err) {
         if (err.code < 0) {
@@ -87,25 +87,31 @@ export async function getAsset(id, { user_id = -1 } = {}) {
         const asset = await getAssetQuery(id);
         
         if (asset.owner_type == 'post') {
-            const post = await getPostById(asset.owner_id, { user_id: Number(user_id) });
-
-            if (post.author_id !== user_id && post.visibility === 'private') {
+            if (asset.post.author_id !== user_id && asset.post.visibility === 'private') {
                 throw new ForbiddenError('Post is private and you are not the author');
             }
 
         } else if (asset.owner_type == 'user') {
-            const user = await getUserById(Number(asset.owner_id), { user_id: Number(user_id) });
-
-            if (user.visibility === 'private' && user.id !== user_id) {
+            if (asset.user.visibility === 'private' && asset.user.id !== user_id) {
                 throw new ForbiddenError('User is private and you are not the user');
             }
         }
 
-        return new CustomResponse(200, 'Asset retrieved successfully!', { asset }).get();
+        const newAsset = {
+            id: asset.id,
+            filename: asset.filename,
+            type: asset.type,
+            created_at: asset.created_at,
+            owner_id: asset.owner_id,
+            owner_type: asset.owner_type,
+        };
+
+        return new CustomResponse(200, 'Asset retrieved successfully!', { asset: newAsset }).get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
+        
         console.error('[assets] getAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }

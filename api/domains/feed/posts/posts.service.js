@@ -1,14 +1,14 @@
 // First created Week 1 by Zane Beidas
 // --------
 
-import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder, likePostById } from './posts.queries.js';
+import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder, likePostById, addPostAttachments } from './posts.queries.js';
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError, BadRequestError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { DatabaseError } from '../../../util/errors.js';
 import { getAttachmentsForPost, deletePostById } from './posts.queries.js';
-
+import { runTransaction } from '../../../database/helpers/transaction.js';
 // ======== CREATE POSTS ======== //
 
 /**
@@ -43,23 +43,26 @@ export async function createPost(author_id, title, { body = '', attachments = []
         }
 
         let attachment_ids = [];
+        await runTransaction(async (c) => {
+            const post = await createNewPost(author_id, title, { body, visibility, client: c });
 
-        const post = await createNewPost(author_id, title, { body, attachment_ids, visibility });
+            for (const attachment of attachments) {
+                const asset = await addAsset(attachment, post.id, 'post', 'post_attachment', { client: c });
 
-        for (const attachment of attachments) {
-            const asset = await addAsset(attachment, post[0].id, 'post', 'post_attachment');
-
-            if (asset.status !== 200) {
-                for (const attachment_id of attachment_ids) {
-                    const response = await removeAsset(attachment_id);
-                    if (response.status !== 200) {
-                        console.error('Failed to remove asset:', response.body);
+                if (asset.status !== 200) {
+                    for (const attachment_id of attachment_ids) {
+                        const response = await removeAsset(attachment_id, { client: c });
+                        if (response.status !== 200) {
+                            console.error('Failed to remove asset:', response.body);
+                        }
                     }
+                    throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
                 }
-                throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
+                attachment_ids.push(asset.body.data.asset.id);
             }
-            attachment_ids.push(asset.body.data.asset.id);
-        }
+
+            await addPostAttachments(post.id, attachment_ids, { client: c });
+        });
 
         return new CustomResponse(200, 'Post created successfully!').get();
     } catch (err) {

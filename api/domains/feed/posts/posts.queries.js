@@ -23,7 +23,7 @@ export async function createNewPost(user_id, title, { body = '', attachment_ids 
         }
 
         return rows[0];
-    }, { client: (client ?? pool) });
+    }, { client: (client ?? null) });
 
     if (!result) throw new DatabaseError('Failed to create post', { code: -1, status: 500 });
 
@@ -39,6 +39,15 @@ export async function likePostById(user_id, post_id, { client = pool } = {}) {
     if (rows.length === 0) throw new DatabaseError('Failed to like post', { code: -1, status: 500 });
 
     return rows[0];
+}
+
+/**
+ * Adds attachment ids to a post
+ */
+export async function addPostAttachments(post_id, attachment_ids, { client = pool } = {}) {
+    for (const attachment_id of attachment_ids) {
+        await (client ?? pool).query('INSERT INTO post_attachments (post_id, asset_id) VALUES ($1, $2)', [post_id, attachment_id]);
+    }
 }
 
 
@@ -220,7 +229,7 @@ export async function getPostsByAuthorId(author_id, { user_id = -1, order = 'des
         LEFT JOIN profiles pr ON pr.user_id = u.id
         WHERE p.author_id = $1 AND (p.visibility = 'public' OR p.author_id = $2)
         ORDER BY p.created_at ${sortOrder}
-        LIMIT $2`,
+        LIMIT $3`,
         [author_id, user_id ?? -1, limit ?? 20]
     );
 

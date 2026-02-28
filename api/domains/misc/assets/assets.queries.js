@@ -57,7 +57,7 @@ export async function removeAssetQuery(id, { client = pool } = {}) {
 
         const path = getPath(asset.owner_type, asset.owner_id, asset.type);
         await removeFile(path, asset.filename);
-    }, { client: (client ?? pool) });
+    }, { client: (client ?? null) });
 }
 
 // ======== GET ASSETS ======== //
@@ -66,7 +66,16 @@ export async function removeAssetQuery(id, { client = pool } = {}) {
  * Gets an asset by its id
  */
 export async function getAssetQuery(id, { client = pool } = {}) {
-    const { rows } = await (client ?? pool).query('SELECT * FROM assets WHERE id = $1 LIMIT 1', [id]);
+    const { rows } = await (client ?? pool).query(`
+        SELECT a.*,
+        json_build_object('author_id', p.author_id, 'visibility', p.visibility) AS post,
+        json_build_object('id', u.id, 'visibility', u.visibility) AS user
+        FROM assets a
+        LEFT JOIN posts p ON p.id = a.owner_id AND a.owner_type = 'post'
+        LEFT JOIN users u ON u.id = a.owner_id AND a.owner_type = 'user'
+        WHERE a.id = $1
+        LIMIT 1
+        `, [id]);
     if (rows.length === 0) {
         throw new NotFoundError('Asset not found');
     }

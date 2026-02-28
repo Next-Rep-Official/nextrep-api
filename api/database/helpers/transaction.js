@@ -11,16 +11,19 @@ import { DatabaseError } from '../../util/errors.js';
  *
  * @returns {Promise<any>} The result of the callback
  */
-export async function runTransaction(callback, { externalClient = pool } = {}) {
+export async function runTransaction(callback, { client: externalClient } = {}) {
+    if (externalClient != null) {
+        return await callback(externalClient);
+    }
+
     const client = await pool.connect();
-    
     try {
-        await client.query('BEGIN'); // start transaction
-        const result = await callback(client); // run user queries
-        await client.query('COMMIT'); // commit if successful
+        await client.query('BEGIN');
+        const result = await callback(client);
+        await client.query('COMMIT');
         return result;
     } catch (err) {
-        await client.query('ROLLBACK'); // rollback on error
+        await client.query('ROLLBACK');
         throw new DatabaseError('Failed to run transaction' + err.message, { code: -1, status: 500 });
     } finally {
         client.release();
