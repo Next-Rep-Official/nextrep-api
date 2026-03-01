@@ -34,11 +34,15 @@ export async function createNewPost(user_id, title, { body = '', attachment_ids 
  * Likes a post by id
  */
 export async function likePostById(user_id, post_id, { client = pool } = {}) {
-    const { rows } = await (client ?? pool).query(`UPDATE posts SET likes = likes + 1 WHERE (id = $1 AND (visibility = 'public' OR author_id = $2)) RETURNING *`, [post_id, user_id]);
+    const result = await runTransaction(async (c) => {
+        const { rows } = await c.query(`UPDATE posts SET likes = likes + 1 WHERE (id = $1 AND (visibility = 'public' OR author_id = $2)) RETURNING *`, [post_id, user_id])
+        
+        if (rows.length === 0) throw new DatabaseError('Failed to like post', { code: -1, status: 500 });
 
-    if (rows.length === 0) throw new DatabaseError('Failed to like post', { code: -1, status: 500 });
-
-    return rows[0];
+        await c.query(`INSERT INTO likes (user_id, target_id, target_type) VALUES ($1, $2, 'post') RETURNING *`, [user_id, post_id]);
+        
+        return rows[0];
+    }, { client: (client ?? null) });
 }
 
 /**

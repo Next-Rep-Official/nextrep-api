@@ -86,6 +86,10 @@ export async function likeReply(user_id, reply_id) {
 
         return new CustomResponse(200, 'Reply liked successfully!', { reply: result }).get();
     } catch (err) {
+        if (err.code == 23505) {
+            return new CustomResponse(400, 'You have already liked this reply').get();
+        }
+
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }

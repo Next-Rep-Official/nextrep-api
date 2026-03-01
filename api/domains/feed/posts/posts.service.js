@@ -1,7 +1,7 @@
 // First created Week 1 by Zane Beidas
 // --------
 
-import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder, likePostById, addPostAttachments } from './posts.queries.js';
+import { createNewPost, getPostsBySearchTerm, getPostById, getPostsByOrder, likePostById, addPostAttachments, getPostsByAuthorId } from './posts.queries.js';
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError, BadRequestError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
@@ -96,6 +96,10 @@ export async function likePost(user_id, post_id) {
 
         return new CustomResponse(200, 'Post liked successfully!', { post: result }).get();
     } catch (err) {
+        if (err.code == 23505) {
+            return new CustomResponse(400, 'You have already liked this post').get();
+        }
+
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
@@ -177,6 +181,35 @@ export async function getPosts(order, { limit = 20, user_id = -1 } = {}) {
         if ((limit ?? 20) < 1) throw new ValidationError('Limit must be at least 1');
 
         const result = await getPostsByOrder(order, { user_id: user_id ?? -1, limit: limit ?? 20 });
+
+        return new CustomResponse(200, 'Successfully found posts!', { posts: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+/**
+ * Get all posts by a user
+ *
+ * @param {number} author_id The ID of the user
+ * @param {number} limit The limit of posts to return
+ * @param {number} user_id The ID of the user requesting the posts
+ * @param {string} order The order of the posts
+ * 
+ * @returns Status and body of response
+ */
+export async function getPostsByUser(author_id, { limit = 20, user_id = -1, order = 'descending'} = {}) {
+    try {
+        validateType(author_id, 'number', 'Author ID');
+        validateType(limit, 'number', 'Limit');
+        validateType(user_id, 'number', 'User ID');
+        validateType(order, 'string', 'Order');
+
+        const result = await getPostsByAuthorId(author_id, { limit: limit ?? 20, user_id: user_id ?? -1, order: order ?? 'descending' });
 
         return new CustomResponse(200, 'Successfully found posts!', { posts: result }).get();
     } catch (err) {

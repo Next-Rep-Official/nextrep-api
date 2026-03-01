@@ -4,7 +4,7 @@
 import { Router } from 'express';
 
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
-import { createPost, getPosts, getPost, searchPosts, likePost } from './posts.service.js';
+import { createPost, getPosts, getPost, searchPosts, likePost, getPostsByUser } from './posts.service.js';
 import { replyToPost, getRepliesFromPost } from '../replies/replies.service.js';
 import { getAttachments, deletePost} from './posts.service.js';
 import multer from 'multer';
@@ -44,18 +44,22 @@ router.put('/:post_id/like', requireAuth, async (req, res) => {
 
 router.get('/post', acceptAuth, async (req, res) => {
     try {
-        const { search_term, order, id, limit } = req.query;
+        const { search_term, order, post_id, limit, author_id } = req.query;
 
         const user_id = req.user?.id;
+        const parsedAuthorId = author_id ? Number.parseInt(author_id) : undefined;
         const parsedLimit = limit ? Number.parseInt(limit) : 20;
-        const parsedId = id ? Number.parseInt(id) : undefined;
+        const parsedPostId = post_id ? Number.parseInt(post_id) : undefined;
         const newOrder = order === 'ascending' ? 'ascending' : 'descending';
 
         let result;
 
-        if (parsedId) {
+        if (parsedPostId) {
             // Get a single post
-            result = await getPost(parsedId, { user_id: user_id ?? -1 });
+            result = await getPost(parsedPostId, { user_id: user_id ?? -1 });
+        } else if (parsedAuthorId) {
+            // Get posts by author
+            result = await getPostsByUser(parsedAuthorId, { user_id: user_id ?? -1, limit: parsedLimit ?? 20 });
         } else if (search_term) {
             // Search posts
             result = await searchPosts(search_term, { user_id: user_id ?? -1, limit: parsedLimit ?? 20 });

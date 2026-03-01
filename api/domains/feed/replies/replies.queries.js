@@ -51,17 +51,28 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 /**
  * Likes a reply
  */
-export async function likeReplyById(user_id, reply_id, { client = pool } = {}) {
-    const { rows } = await (client ?? pool).query(`
-        UPDATE replies r 
-        JOIN posts p ON p.id = r.post_id AND p.author_id = $2 
-        SET likes = likes + 1 WHERE (r.id = $1 AND (p.visibility = 'public' OR p.author_id = $2)) 
-        RETURNING *
-        `, [reply_id, user_id]);
+export async function likeReplyById(user_id, reply_id, { client = pool } = {}) {    
+    const result = await runTransaction(async (c) => {
+        const { rows } = await c.query(`
+            UPDATE replies r 
+            SET likes = likes + 1
+            FROM posts p
+            WHERE r.id = $1 
+            AND r.post_id = p.id
+            AND (p.visibility = 'public' OR p.author_id = $2)
+            RETURNING *
+            `, [reply_id, user_id]);
+    
+        if (rows.length === 0) throw new DatabaseError('Failed to like reply', { code: -1, status: 500 });
+    
+        await c.query(`INSERT INTO likes (user_id, target_id, target_type) VALUES ($1, $2, 'reply') RETURNING *`, [user_id, reply_id]);
 
-    if (rows.length === 0) throw new DatabaseError('Failed to like reply', { code: -1, status: 500 });
+        return rows[0];
+    }, { client: (client ?? null) });
 
-    return rows[0];
+    if (!result) throw new DatabaseError('Failed to like reply', { code: -1, status: 500 });
+
+    return result;
 }
 
 
