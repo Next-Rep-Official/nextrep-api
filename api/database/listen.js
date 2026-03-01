@@ -15,7 +15,7 @@ client.on('notification', async (msg) => {
             const payload = JSON.parse(msg.payload);
             const assetId = payload.profile_picture != null ? Number(payload.profile_picture) : null;
             if (assetId == null) return console.log('No profile picture to remove ❌'); // no picture was set
-            const response = await removeAsset(assetId);
+            const response = await removeAsset(assetId, { client: client });
 
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);
@@ -32,7 +32,7 @@ client.on('notification', async (msg) => {
 
             if (assetId == null) return console.log('No post attachment to remove ❌');
 
-            const response = await removeAsset(assetId);
+            const response = await removeAsset(assetId, { client: client });
 
             if (response.status !== 200) {
                 console.error('Error removing asset:', response.body);

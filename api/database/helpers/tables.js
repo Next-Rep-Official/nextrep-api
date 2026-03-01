@@ -22,14 +22,19 @@ export async function initTables() {
         const files = await fs.readdir(folderPath);
 
         for (const fileName of files) {
-            const fullPath = path.join(folderPath, fileName);
-            const data = await parseFile(fullPath);
-
-            await pool.query(data);
+            try {
+                const fullPath = path.join(folderPath, fileName);
+                const data = await parseFile(fullPath);
+    
+                await pool.query(data);
+            } catch (err) {
+                console.error(`[tables] Error initializing table ${fileName}:`, err);
+            }
         }
-
-        return "Tables initialized successfully ✅";
     } catch (err) {
+        console.error('[tables] Error initializing tables:', err);
         return err;
     }
+
+    return "Tables initialized successfully ✅";
 }
