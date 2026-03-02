@@ -1,8 +1,8 @@
 // First created Week 3 by Zane Beidas
 // --------
 
-import pool from './db.js';
-import { removeAsset } from '../../domains/misc/assets/assets.service.js';
+import pool from '../api/storage/database/db.js';
+import { removeAsset } from '../api/domains/misc/assets/assets.service.js';
 
 const client = await pool.connect();
 console.log('Connected to database ✅');

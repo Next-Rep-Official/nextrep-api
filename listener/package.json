@@ -1,13 +1,13 @@
 {
-    "name": "nextrep-backend",
+    "name": "nextrep-listener",
     "version": "1.0.0",
-    "description": "backend api interface for the nextrep fitness forum and community",
-    "main": "app.js",
+    "description": "listener to connect bucket the nextrep database",
+    "main": "listen.js",
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node api/app.js",
-        "dev": "nodemon api/app.js"
+        "start": "node listen.js",
+        "dev": "nodemon listen.js"
     },
     "author": "Zane Beidas",
     "license": "MIT",
