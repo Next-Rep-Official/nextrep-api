@@ -22,4 +22,7 @@ export default {
         bucketName: process.env.AWS_S3_BUCKET_NAME,
         endpoint: process.env.AWS_ENDPOINT_URL,
     },
+    redis: {
+        url: process.env.REDIS_URL,
+    }
 };

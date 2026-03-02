@@ -1,8 +1,8 @@
 // First created Week 3 by Zane Beidas
 // --------
 
-import pool from '../../../database/db.js';
-import { runTransaction } from '../../../database/helpers/transaction.js';
+import pool from '../../../storage/database/db.js';
+import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 import { NotFoundError, UniqueViolationError } from '../../../util/errors.js';
 
 

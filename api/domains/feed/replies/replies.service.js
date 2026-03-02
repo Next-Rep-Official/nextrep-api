@@ -4,6 +4,7 @@
 import { validateType } from '../../../util/validation.js';
 import { addReply, getAllRepliesFromPost, getAllRepliesFromReply, deleteReplyById } from './replies.queries.js';
 import { CustomResponse } from '../../../util/response.js';
+import redisClient from "../../../storage/redis/redis.js";
 
 // ======== CREATE REPLIES ========
 
@@ -23,6 +24,8 @@ export async function replyToPost(user_id, post_id, body) {
         validateType(body, 'string', 'Body');
 
         const reply = await addReply(user_id, body, { post_id });
+
+        redisClient.publish('post_replies', JSON.stringify({ post_id, reply, type: 'post_reply' }));
 
         return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
@@ -54,6 +57,8 @@ export async function replyToReply(user_id, reply_id, body) {
         validateType(body, 'string', 'Body');
         
         const reply = await addReply(user_id, body, { parent_id: reply_id });
+
+        redisClient.publish('reply_replies', JSON.stringify({ reply_id, reply, type: 'reply_reply' }));
 
         return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {

@@ -1,9 +1,9 @@
 // First created Week 1 by Zane Beidas
 // --------
 
-import pool from '../../../database/db.js';
+import pool from '../../../storage/database/db.js';
 import { DatabaseError, NotFoundError } from '../../../util/errors.js';
-import { runTransaction } from '../../../database/helpers/transaction.js';
+import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 import { removeAsset } from '../../misc/assets/assets.service.js';
 
 
@@ -40,7 +40,7 @@ export async function likePostById(user_id, post_id, { client = pool } = {}) {
         if (rows.length === 0) throw new DatabaseError('Failed to like post', { code: -1, status: 500 });
 
         await c.query(`INSERT INTO likes (user_id, target_id, target_type) VALUES ($1, $2, 'post') RETURNING *`, [user_id, post_id]);
-        
+
         return rows[0];
     }, { client: (client ?? null) });
 }

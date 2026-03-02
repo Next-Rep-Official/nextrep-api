@@ -5,8 +5,8 @@ import { addAssetQuery, removeAssetQuery, getAssetQuery } from './assets.queries
 import { validateType } from '../../../util/validation.js';
 import { getPostById } from '../../feed/posts/posts.queries.js';
 import { getUserById } from '../../user/auth/auth.queries.js';
-import { getSignedUrl } from '../../../bucket/helpers/load.js';
-import { getPath } from '../../../bucket/helpers/upload.js';
+import { getSignedUrl } from '../../../storage/bucket/helpers/load.js';
+import { getPath } from '../../../storage/bucket/helpers/upload.js';
 import { ForbiddenError, ValidationError, DatabaseError } from '../../../util/errors.js';
 import { CustomResponse } from '../../../util/response.js';
 
@@ -111,7 +111,7 @@ export async function getAsset(id, { user_id = -1 } = {}) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-        
+
         console.error('[assets] getAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }

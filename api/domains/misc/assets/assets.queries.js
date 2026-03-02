@@ -1,10 +1,10 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import { uploadFile, getPath } from '../../../bucket/helpers/upload.js';
-import pool from '../../../database/db.js';
-import { removeFile } from '../../../bucket/helpers/remove.js';
-import { runTransaction } from '../../../database/helpers/transaction.js';
+import { uploadFile, getPath } from '../../../storage/bucket/helpers/upload.js';
+import pool from '../../../storage/database/db.js';
+import { removeFile } from '../../../storage/bucket/helpers/remove.js';
+import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 import { NotFoundError, DatabaseError } from "../../../util/errors.js";
 
 

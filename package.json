@@ -24,7 +24,9 @@
         "fs": "^0.0.1-security",
         "jsonwebtoken": "^9.0.3",
         "multer": "^2.0.2",
-        "pg": "^8.17.2"
+        "pg": "^8.17.2",
+        "redis": "^5.11.0",
+        "ws": "^8.19.0"
     },
     "devDependencies": {
         "prettier": "3.8.1"

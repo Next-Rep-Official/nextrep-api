@@ -8,7 +8,7 @@ import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { DatabaseError } from '../../../util/errors.js';
 import { getAttachmentsForPost, deletePostById } from './posts.queries.js';
-import { runTransaction } from '../../../database/helpers/transaction.js';
+import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 // ======== CREATE POSTS ======== //
 
 /**

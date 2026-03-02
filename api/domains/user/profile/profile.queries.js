@@ -1,7 +1,7 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import pool from '../../../database/db.js';
+import pool from '../../../storage/database/db.js';
 import { NotFoundError, DatabaseError } from '../../../util/errors.js';
 
 
