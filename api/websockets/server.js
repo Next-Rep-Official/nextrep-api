@@ -1,12 +1,12 @@
 // First created Week 5 by Zane Beidas
 // --------
 
-import ws from 'ws';
+import { WebSocketServer } from 'ws';
 import { redisSubscribe } from '../storage/redis/redis.js';
 import { joinChannel, leaveChannel, broadcastToChannel, removeClientFromAllChannels } from './channels.js';
 import config from '../config.js';
 
-const server = new ws.Server({ port: 8080 });
+const server = new WebSocketServer({ port: 8080 });
 
 server.on('connection', ws => {
     console.log('Client connected');

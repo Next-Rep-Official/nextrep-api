@@ -15,7 +15,7 @@ export async function parseFile(name) {
 }
 
 export async function initTables() {
-    const folderPath = path.join(process.cwd(), 'api', 'database', 'tables');
+    const folderPath = path.join(process.cwd(), 'api', 'storage', 'database', 'tables');
 
     try {
         console.log(folderPath);

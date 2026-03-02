@@ -14,6 +14,8 @@ import { initTables } from './storage/database/helpers/tables.js';
 import config from './config.js';
 
 
+import './websockets/server.js';
+
 // ======== CREATE APP ======== //
 
 const app = express();
