@@ -11,7 +11,7 @@ import assets from './domains/misc/assets/assets.routes.js';
 import rateLimit from 'express-rate-limit';
 
 import { initTables } from './storage/database/helpers/tables.js';
-import config from './config.js';
+import config from '../config.js';
 
 
 import './websockets/server.js';
@@ -58,5 +58,5 @@ app.use('/assets', assets);
 // ======== START SERVER ======== //
 
 app.listen(3000, () => {
-    console.log(`Server is running on port ${3000}`);
+    console.log(`✅ Server is running on port ${3000}`);
 });

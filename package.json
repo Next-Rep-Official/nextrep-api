@@ -1,13 +1,13 @@
 {
-    "name": "nextrep-listener",
+    "name": "nextrep-api",
     "version": "1.0.0",
-    "description": "listener to connect bucket the nextrep database",
-    "main": "listen.js",
+    "description": "api for the nextrep app",
+    "main": "api/app.js",
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node listen.js",
-        "dev": "nodemon listen.js"
+        "start": "node api/app.js",
+        "dev": "nodemon api/app.js"
     },
     "author": "Zane Beidas",
     "license": "MIT",

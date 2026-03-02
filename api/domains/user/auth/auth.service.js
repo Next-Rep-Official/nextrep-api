@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 
 import { createNewUser, getUserDataFromKey, getUserById, searchUsersByTerm, deleteUserById, updateUserVisibilityById } from './auth.queries.js';
 
-import config from '../../../config.js';
+import config from '../../../../config.js';
 
 import { validateType } from '../../../util/validation.js';
 import { ValidationError, ForbiddenError } from '../../../util/errors.js';

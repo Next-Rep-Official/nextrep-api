@@ -2,12 +2,12 @@
 // --------
 
 import { createClient } from 'redis';
-import config from '../../config.js';
+import config from '../../../config.js';
 
 const client = createClient({ url: config.redis.url });
 
-client.on('error', (err) => console.error('Redis error:', err));
-client.on('connect', () => console.log('Redis connected'));
+client.on('error', (err) => console.error('❌ Redis error:', err.message));
+client.on('connect', () => console.log('✅ Redis connected'));
 
 const redisClient = client;
 await redisClient.connect();

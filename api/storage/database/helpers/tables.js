@@ -18,7 +18,6 @@ export async function initTables() {
     const folderPath = path.join(process.cwd(), 'api', 'storage', 'database', 'tables');
 
     try {
-        console.log(folderPath);
         const files = await fs.readdir(folderPath);
 
         for (const fileName of files) {
@@ -28,7 +27,7 @@ export async function initTables() {
     
                 await pool.query(data);
             } catch (err) {
-                console.error(`[tables] Error initializing table ${fileName}:`, err);
+                console.error(`❌ Error initializing table ${fileName}: `, err?.message);
             }
         }
     } catch (err) {
@@ -36,5 +35,5 @@ export async function initTables() {
         return err;
     }
 
-    return "Tables initialized successfully ✅";
+    return "✅ Tables initialized successfully";
 }

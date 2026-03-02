@@ -4,7 +4,7 @@
 import { WebSocketServer } from 'ws';
 import { redisSubscribe } from '../storage/redis/redis.js';
 import { joinChannel, leaveChannel, broadcastToChannel, removeClientFromAllChannels } from './channels.js';
-import config from '../config.js';
+import config from '../../config.js';
 
 const server = new WebSocketServer({ port: 8080 });
 
