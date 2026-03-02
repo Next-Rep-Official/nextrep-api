@@ -7,7 +7,7 @@ try {
     await removeStrayAssets();
 
     // Log success and exit with status code 0
-    console.log('Jobs completed successfully ✅');
+    console.log('✅ Jobs completed successfully');
     process.exit(0);
 } catch (error) {
     // Log error and exit with status code 1
