@@ -53,3 +53,7 @@ redisSubscribe.subscribe('post_replies', (message) => {
         console.log('❌ Error parsing message:', err.message);
     }
 });
+
+server.on('listening', () => {
+    console.log('✅ WebSocket server is running on port 8080');
+});
