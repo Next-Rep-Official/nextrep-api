@@ -6,14 +6,14 @@ import config from '../../../config.js';
 
 const client = createClient({ url: config.redis.url });
 
-client.on('error', (err) => console.error('❌ Redis error:', err.message));
+client.on('error', (err) => console.error('Redis error:', err.message));
 client.on('connect', () => console.log('✅ Redis connected'));
 
 const redisClient = client;
-await redisClient.connect();
+await redisClient.connect().catch((err) => console.error('❌ Error connecting to Redis'));
 
 const redisSubscribe = redisClient.duplicate();
-await redisSubscribe.connect();
+await redisSubscribe.connect().catch((err) => console.error('❌ Error connecting to Redis'));
 
 export default redisClient;
 export { redisSubscribe };

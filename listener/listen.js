@@ -10,12 +10,12 @@ const removeAssetSequence = async (assetId) => {
         const response = await removeAsset(assetId);
 
         if (response.status !== 200) {
-            console.error('❌ Error removing asset:', response.body.data.asset);
+            console.log('❌ Error removing asset');
         } else {
             console.log('✅ Profile picture removed');
         }
     } catch (err) {
-        console.error('❌ Error removing assets:', err.message);
+        console.log('❌ Error removing assets:', err.message);
     }
 }
 
@@ -24,26 +24,28 @@ async function startListener() {
     console.log('✅ Connected to database');
 
     client.on('error', async (err) => {
-        console.error('❌ Database connection error:', err.message);
+        console.log('❌ Database connection error:', err.message);
         client.release(true);
-        setTimeout(startListener, 5000);
     });
 
     client.on('notification', async (msg) => {
         console.log('✅ Notification received');
+        try {
+            if (msg.channel === 'profile_removed') {
+                const payload = JSON.parse(msg.payload);
+                const assetId = payload.profile_picture != null ? Number(payload.profile_picture) : null;
+                if (assetId == null) return console.log('No profile picture to remove ❌');
+                                                                                            
+                await removeAssetSequence(assetId);
+            } else if (msg.channel === 'post_attachment_removed') {
+                const payload = JSON.parse(msg.payload);
+                const assetId = payload.asset_id != null ? Number(payload.asset_id) : null;
+                if (assetId == null) return console.log('No post attachment to remove ❌');
 
-        if (msg.channel === 'profile_removed') {
-            const payload = JSON.parse(msg.payload);
-            const assetId = payload.profile_picture != null ? Number(payload.profile_picture) : null;
-            if (assetId == null) return console.log('No profile picture to remove ❌');
-                                                                                        
-            await removeAssetSequence(assetId);
-        } else if (msg.channel === 'post_attachment_removed') {
-            const payload = JSON.parse(msg.payload);
-            const assetId = payload.post_attachment != null ? Number(payload.post_attachment) : null;
-            if (assetId == null) return console.log('No post attachment to remove ❌');
-
-            await removeAssetSequence(assetId);
+                await removeAssetSequence(assetId);
+            }
+        } catch (err) {
+            console.log('❌ Error parsing message:', err.message);
         }
     });
 
@@ -65,4 +67,8 @@ async function startListener() {
 //     process.exit(0);
 // });
 
-startListener();
+startListener().catch((err) => {
+    console.error('❌ Error starting listener:', err.message);
+    
+    setTimeout(startListener, 5000);
+});

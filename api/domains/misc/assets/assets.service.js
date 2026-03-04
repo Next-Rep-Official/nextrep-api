@@ -10,6 +10,7 @@ import { getPath } from '../../../storage/bucket/helpers/upload.js';
 import { ForbiddenError, ValidationError, DatabaseError } from '../../../util/errors.js';
 import { CustomResponse } from '../../../util/response.js';
 
+import pool from '../../../storage/database/db.js';
 
 // ======== ADD ASSETS ======== //
 

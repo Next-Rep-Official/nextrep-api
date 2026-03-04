@@ -219,7 +219,7 @@ export async function deleteUser(id) {
 
         return new CustomResponse(200, 'User deleted successfully!').get();
     } catch (err) {
-        if (err.code === 23503) {
+        if (err.code == 23503) {
             return new CustomResponse(400, 'User does not exist').get();
         }
 

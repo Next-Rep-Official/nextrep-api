@@ -31,14 +31,14 @@ router.get('/url/:id', acceptAuth, async (req, res) => {
     }
 });
 
-router.delete('/test-delete/:id', acceptAuth, async (req, res) => {
-    try {
-        const result = await removeAsset(Number(req.params.id));
-        res.status(result.status).json(result.body);
-    } catch (err) {
-        console.error('[assets] DELETE /test-delete/:id 500:', err?.message ?? err, err?.stack);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
+// router.delete('/test-delete/:id', acceptAuth, async (req, res) => {
+//     try {
+//         const result = await removeAsset(Number(req.params.id));
+//         res.status(result.status).json(result.body);
+//     } catch (err) {
+//         console.error('[assets] DELETE /test-delete/:id 500:', err?.message ?? err, err?.stack);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// });
 
 export default router;

@@ -117,7 +117,7 @@ export async function getAssetQuery(id, { client = pool } = {}) {
  */
 export async function addS3ObjectCleanupQuery(path, filename, { client = pool } = {}) {
     await (client ?? pool).query(
-        'INSERT INTO cleanup_queue (action, payload) VALUES ($1, $2)',
+        'INSERT INTO cleanup (type, data) VALUES ($1, $2)',
         ['delete_s3_object', JSON.stringify({ path, filename })]
     );
 }
@@ -127,7 +127,7 @@ export async function addS3ObjectCleanupQuery(path, filename, { client = pool } 
  */
 export async function addAssetCleanupQuery(id, { client = pool } = {}) {
     await (client ?? pool).query(
-        'INSERT INTO cleanup_queue (action, payload) VALUES ($1, $2)',
+        'INSERT INTO cleanup (type, data) VALUES ($1, $2)',
         ['delete_asset', JSON.stringify({ asset_id: id })]
     );
 }

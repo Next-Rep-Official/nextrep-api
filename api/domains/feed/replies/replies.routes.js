@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
-import { replyToReply, getRepliesFromReply, deleteReply } from './replies.service.js';
+import { replyToReply, getRepliesFromReply, deleteReply, likeReply } from './replies.service.js';
 
 const router = Router();
 
@@ -64,6 +64,7 @@ router.delete('/:reply_id', requireAuth, async (req, res) => {
 
     try {
         const response = await deleteReply(user_id, reply_id);
+        res.status(response.status).json(response.body);
     } catch (err) {
         res.status(500).json({ message: 'Internal server error' });
     }

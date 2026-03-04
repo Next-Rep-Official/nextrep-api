@@ -2,7 +2,7 @@
 // --------
 
 import { validateType } from '../../../util/validation.js';
-import { addReply, getAllRepliesFromPost, getAllRepliesFromReply, deleteReplyById } from './replies.queries.js';
+import { addReply, getAllRepliesFromPost, getAllRepliesFromReply, deleteReplyById, likeReplyById } from './replies.queries.js';
 import { CustomResponse } from '../../../util/response.js';
 import redisClient from "../../../storage/redis/redis.js";
 
@@ -29,7 +29,7 @@ export async function replyToPost(user_id, post_id, body) {
 
         return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
-        if (err.code === 23503) {
+        if (err.code == 23503) {
             return new CustomResponse(400, 'Post does not exist').get();
         }
 
@@ -62,7 +62,7 @@ export async function replyToReply(user_id, reply_id, body) {
 
         return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
-        if (err.code === 23503) {
+        if (err.code == 23503) {
             return new CustomResponse(400, 'Parent reply does not exist').get();
         }
 

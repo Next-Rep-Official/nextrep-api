@@ -1,3 +1,6 @@
+// Created Week 6 by Zane Beidas
+// --------
+
 import pool from '../../api/storage/database/db.js';
 import {s3, BUCKET_NAME} from '../../api/storage/bucket/s3.js';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';

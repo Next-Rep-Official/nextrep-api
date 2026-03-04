@@ -11,7 +11,7 @@ import { ValidationError, NotFoundError, DatabaseError } from '../../../util/err
  * Replies to anything, depends on the options
  */
 export async function addReply(user_id, body, {post_id = null, parent_id = null, client = pool} = {}) {
-    if ((post_id || parent_id) == false) throw new ValidationError('Post id or parent reply is required');
+    if (!post_id && !parent_id) throw new ValidationError('Post id or parent reply is required');
 
     const result = await runTransaction(async (c) => {
         const { rows } = await c.query(
@@ -136,6 +136,8 @@ export async function deleteReplyById(user_id, reply_id, { client = pool } = {})
     const result = await runTransaction(async (c) => {
         const { rows } = await c.query('DELETE FROM replies WHERE id = $1 AND author_id = $2 RETURNING *', [reply_id, user_id]);
 
+        if (rows.length === 0) throw new NotFoundError('Reply not found');
+
         if (rows[0].parent_id === null) {
             await c.query('UPDATE posts SET replies_count = replies_count - 1 WHERE id = $1', [rows[0].post_id]);
         } else {
@@ -144,8 +146,6 @@ export async function deleteReplyById(user_id, reply_id, { client = pool } = {})
 
         return rows[0];
     }, { client: (client ?? pool) });
-
-    const { rows } = await (client ?? pool).query('DELETE FROM replies WHERE id = $1 AND author_id = $2 RETURNING *', [reply_id, user_id]);
 
     return result;
 }

@@ -1,3 +1,6 @@
+// Created Week 6 by Zane Beidas
+// --------
+
 import removeStrayS3Objects from './jobs/remove_stray_assets.js';
 
 // Run jobs and exit with status code

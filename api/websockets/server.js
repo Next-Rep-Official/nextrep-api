@@ -29,10 +29,14 @@ server.on('connection', ws => {
 });
 
 redisSubscribe.subscribe('post_replies', (message) => {
-    const data = JSON.parse(message);
-    if (data.type == 'post_reply') {
-        broadcastToChannel(`post_${data.post_id}`, data.reply);
-    } else if (data.type == 'reply_reply') {
-        broadcastToChannel(`reply_${data.reply_id}`, data.reply);
+    try {
+        const data = JSON.parse(message);
+        if (data.type == 'post_reply') {
+            broadcastToChannel(`post_${data.post_id}`, data.reply);
+        } else if (data.type == 'reply_reply') {
+            broadcastToChannel(`reply_${data.reply_id}`, data.reply);
+        }
+    } catch (err) {
+        console.error('❌ Error parsing message:', err.message);
     }
 });

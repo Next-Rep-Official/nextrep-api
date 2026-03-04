@@ -43,6 +43,8 @@ export async function likePostById(user_id, post_id, { client = pool } = {}) {
 
         return rows[0];
     }, { client: (client ?? null) });
+
+    return result;
 }
 
 /**

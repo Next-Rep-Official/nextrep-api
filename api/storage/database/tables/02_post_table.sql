@@ -31,3 +31,8 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
+-- Create the trigger
+CREATE TRIGGER IF NOT EXISTS posts_tsvector_trigger
+BEFORE INSERT OR UPDATE ON public.posts
+FOR EACH ROW
+EXECUTE FUNCTION posts_tsvector_trigger();

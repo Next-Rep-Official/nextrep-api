@@ -2,6 +2,7 @@
 // --------
 
 import jwt from 'jsonwebtoken';
+import config from '../../config.js';
 
 /**
  * Use this as middleware to force users to be authenticated
@@ -21,7 +22,7 @@ export function requireAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
 
     try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
 
         // attach user to request
         req.user = payload;
@@ -52,7 +53,7 @@ export function acceptAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
 
     try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
 
         // attach user to request
         req.user = payload;

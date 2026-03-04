@@ -35,8 +35,11 @@ Object.entries(config).forEach(([sectionKey, sectionValue]) => {
 
 // Initilize server
 app.use(express.json());
+
+// -> TODO: Add CORS
 app.use(cors());
 
+// -> TODO: Add rate limiting after testing
 // // Handle rate limiting
 // const limiter = rateLimit({
 //     windowMs: 10 * 60 * 1000, // 15 minutes
