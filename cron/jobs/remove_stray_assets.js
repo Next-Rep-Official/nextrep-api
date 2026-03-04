@@ -8,6 +8,11 @@ export default async function removeStrayS3Objects() {
 
         console.log("\n ======== BEGINNING TO CHECK S3 OBJECTS ========= \n")
 
+        if (rows.length === 0) {
+            console.log("✅ No stray s3 objects found");
+            return true;
+        }
+
         for (const row of rows) {
             let path = null;
             let filename = null;
