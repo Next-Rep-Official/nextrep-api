@@ -27,7 +27,7 @@ export async function replyToPost(user_id, post_id, body) {
 
         redisClient.publish('post_replies', JSON.stringify({ post_id, reply, type: 'post_reply' }));
 
-        return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
+        return new CustomResponse(200, 'Reply created successfully!', { reply, post: reply.post }).get();
     } catch (err) {
         if (err.code == 23503) {
             return new CustomResponse(400, 'Post does not exist').get();
@@ -58,7 +58,7 @@ export async function replyToReply(user_id, reply_id, body) {
         
         const reply = await addReply(user_id, body, { parent_id: reply_id });
 
-        redisClient.publish('reply_replies', JSON.stringify({ reply_id, reply, type: 'reply_reply' }));
+        redisClient.publish('post_replies', JSON.stringify({ reply_id, reply, type: 'reply_reply' }));
 
         return new CustomResponse(200, 'Reply created successfully!', { reply }).get();
     } catch (err) {
@@ -169,6 +169,8 @@ export async function deleteReply(user_id, reply_id) {
         validateType(reply_id, 'number', 'Reply ID');
 
         const reply = await deleteReplyById(user_id, reply_id);
+
+        redisClient.publish('post_replies', JSON.stringify({ reply_id, type: 'reply_deleted' }));
 
         return new CustomResponse(200, 'Reply deleted successfully!', { reply }).get();
     } catch (err) {
