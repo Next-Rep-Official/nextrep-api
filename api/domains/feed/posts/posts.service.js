@@ -21,6 +21,18 @@ import { runTransaction } from '../../../storage/database/helpers/transaction.js
  * @returns Status and body of response
  */
 export async function createPost(author_id, title, { body = '', attachments = [], visibility = 'private' } = {}) {
+    // Rollback fucntion
+    const rollbackLoop = async (attachment_ids, client) => {
+        for (const attachment_id of attachment_ids) {
+            const response = await removeAsset(attachment_id, { client: client });
+            if (response.status !== 200) {
+                console.error('❌ Failed to remove asset:', response.body);
+            }
+        }
+
+        throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
+    }
+
     // Create the post
     try {
         if (!author_id || !title) throw new ValidationError('Please input a author_id and title');
@@ -50,14 +62,9 @@ export async function createPost(author_id, title, { body = '', attachments = []
                 const asset = await addAsset(attachment, post.id, 'post', 'post_attachment', { client: c });
 
                 if (asset.status !== 200) {
-                    for (const attachment_id of attachment_ids) {
-                        const response = await removeAsset(attachment_id, { client: c });
-                        if (response.status !== 200) {
-                            console.error('Failed to remove asset:', response.body);
-                        }
-                    }
-                    throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
+                    await rollbackLoop(attachment_ids, c);
                 }
+
                 attachment_ids.push(asset.body.data.asset.id);
             }
 

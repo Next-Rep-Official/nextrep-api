@@ -6,7 +6,8 @@ import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { CustomResponse } from '../../../util/response.js';
 import { ValidationError, DatabaseError } from '../../../util/errors.js';
-
+import { addAssetCleanup } from '../../misc/assets/assets.service.js';
+import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 // ======== GET PROFILES ======== //
 
 /**
@@ -74,35 +75,39 @@ export async function updateProfilePicture(user_id, profile_picture) {
         // Type checks
         validateType(user_id, 'number', 'User ID');
 
-        const profile = await getProfileByUserIdQuery(user_id);
-
         if (profile_picture.buffer === undefined || profile_picture.mimetype === undefined) {
             throw new ValidationError('Profile picture must be a file');
         }
 
-
-        // Add asset to the database and bucket
-        asset = await addAsset(profile_picture, user_id, 'user', 'profile_picture');
-
-        // If the asset was not added successfully, throw an error
-        if (asset.status !== 200) {
-            throw new DatabaseError('Failed to add asset', { status: asset.status, code: -1 });
-        }
-
-        const assetId = asset.body.data.asset.id;
+        const profile = await getProfileByUserIdQuery(user_id);
 
         // Update the profile picture of the user
-        const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, assetId);
+        const result = await runTransaction(async (c) => {
+            // Add asset to the database and bucket
+            asset = await addAsset(profile_picture, user_id, 'user', 'profile_picture');
+
+            // If the asset was not added successfully, throw an error
+            if (asset.status !== 200) {
+                throw new DatabaseError(asset.body.message, { status: asset.status, code: -1 });
+            }
+
+            const assetId = asset.body.data.asset.id;
+            const updatedProfile = await updateProfilePictureByUserIdQuery(user_id, assetId, { client: c });
+
+            return updatedProfile;
+        });
 
         if (profile.profile_picture != null) {
             const response = await removeAsset(profile.profile_picture);
+
             if (response.status !== 200) {
                 console.error("Failed to remove old asset ❌");
+                
                 throw new DatabaseError('Failed to remove old asset', { status: response.status, code: -1 });
             }
         }
 
-        return new CustomResponse(200, 'Profile picture updated successfully', { profile: updatedProfile }).get();
+        return new CustomResponse(200, 'Profile picture updated successfully', { profile: result }).get();
     } catch (err) {
         const assetId = asset?.body?.data?.asset?.id;
         if (assetId != null) {

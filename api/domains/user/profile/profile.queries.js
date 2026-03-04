@@ -71,7 +71,7 @@ export async function getProfileByIdQuery(id, { user_id = -1, client = pool } = 
  * Updates the profile picture of a user
  */
 export async function updateProfilePictureByUserIdQuery(user_id, profile_picture_id, { client = pool } = {}) {
-    const { rows } = await (client ?? pool).query('UPDATE profiles SET profile_picture = $1 WHERE user_id = $2 RETURNING *', [profile_picture_id, user_id]);
+    const { rows } = await (client ?? pool).query('UPDATE profiles SET profile_picture = $1 WHERE user_id = $2 RETURNING profile_picture AS old_profile_picture', [profile_picture_id, user_id]);
     if (rows.length === 0) {
         throw new NotFoundError('Profile not found');
     }

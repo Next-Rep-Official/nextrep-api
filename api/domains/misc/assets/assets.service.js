@@ -1,7 +1,7 @@
 // First created Week 2 by Zane Beidas
 // --------
 
-import { addAssetQuery, removeAssetQuery, getAssetQuery } from './assets.queries.js';
+import { addAssetQuery, removeAssetQuery, getAssetQuery, addS3ObjectCleanupQuery, addAssetCleanupQuery } from './assets.queries.js';
 import { validateType } from '../../../util/validation.js';
 import { getPostById } from '../../feed/posts/posts.queries.js';
 import { getUserById } from '../../user/auth/auth.queries.js';
@@ -58,13 +58,13 @@ export async function removeAsset(id, { client = pool } = {}) {
     try {
         validateType(id, 'number', 'ID');
 
-        await removeAssetQuery(id, { client: client ?? pool });
-        return new CustomResponse(200, 'Asset removed successfully!').get();
+        const asset = await removeAssetQuery(id, { client: client ?? pool });
+        return new CustomResponse(200, 'Asset removed successfully!', { asset }).get();
     } catch (err) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-        console.error('[assets] removeAsset 500:', err?.message ?? err, err?.stack);
+
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -112,7 +112,6 @@ export async function getAsset(id, { user_id = -1 } = {}) {
             return new CustomResponse(err.status, err.message).get();
         }
 
-        console.error('[assets] getAsset 500:', err?.message ?? err, err?.stack);
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
@@ -146,7 +145,55 @@ export async function getUrl(id, { user_id = -1 } = {}) {
         if (err.code < 0) {
             return new CustomResponse(err.status, err.message).get();
         }
-        console.error('[assets] getUrl 500:', err?.message ?? err, err?.stack);
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+
+// ======== ASSET CLEANUP ======== //
+
+/**
+ * Adds an S3 object (from the bucket) cleanup to the cleanup queue
+ * 
+ * @param {string} path The path of the S3 object to cleanup
+ * @param {string} filename The filename of the S3 object to cleanup
+ * @param {object} { client = pool } The client to use for the cleanup
+ *
+ * @returns {Promise<Object>} A custom response object with the added cleanup
+ */
+export async function addS3ObjectCleanup(path, filename, { client = pool } = {}) {
+    try {
+        validateType(path, 'string', 'Path');
+        validateType(filename, 'string', 'Filename');
+
+        await addS3ObjectCleanupQuery(path, filename, { client: client ?? pool });
+        return new CustomResponse(200, 'S3 object cleanup added successfully!').get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+/**
+ * Adds an asset (from the database and s3) cleanup to the cleanup queue
+ * 
+ * @param {number} id The id of the asset to cleanup
+ * @param {object} { client = pool } The client to use for the cleanup
+ *
+ * @returns {Promise<Object>} A custom response object with the added cleanup
+ */
+export async function addAssetCleanup(id, { client = pool } = {}) {
+    try {
+        validateType(id, 'number', 'ID');
+
+        await addAssetCleanupQuery(id, { client: client ?? pool });
+        return new CustomResponse(200, 'Asset cleanup added successfully!').get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
         return new CustomResponse(500, 'Internal server error').get();
     }
 }
