@@ -48,11 +48,11 @@ export default async function removeStrayS3Objects() {
             }
         }
 
-        console.log("\n ======== FINISHED CHECKING S3 OBJECTS ========= \n");
-
         return true;
     } catch (error) {
         console.error('❌ Error removing stray s3 objects:', error);
         return false;
+    } finally {
+        console.log("\n ======== FINISHED CHECKING S3 OBJECTS ========= \n");
     }
 }
