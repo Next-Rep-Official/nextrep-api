@@ -10,8 +10,6 @@ import { joinChannel, leaveChannel, broadcastToChannel, removeClientFromAllChann
  */
 export function initWebSocket(wss) {
     wss.on('connection', ws => {
-        console.log('Client connected');
-
         ws.on('message', async message => {
             try {
                 const data = JSON.parse(message);

@@ -15,8 +15,15 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
     const result = await runTransaction(async (c) => {
         const { rows } = await c.query(
-            `SELECT p.*
+            `SELECT p.* as post, json_build_object(
+                'username', u.username,
+                'display_name', pr.display_name,
+                'profile_picture', pr.profile_picture,
+                'pronouns', pr.pronouns
+            ) AS author
             FROM posts p
+            JOIN users u ON u.id = $3
+            JOIN profiles pr ON pr.user_id = u.id
             LEFT JOIN replies r ON r.post_id = p.id AND r.id = $2
             WHERE (
                 ($1::int IS NOT NULL AND p.id = $1) OR
@@ -24,12 +31,12 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
             )
             AND (p.visibility = 'public' OR p.author_id = $3)
             LIMIT 1;`,
-            [post_id, parent_id, user_id]
+            [post_id, parent_id, user_id,]
         );
 
         if (rows.length === 0) throw new NotFoundError('Post or parent reply not found');
 
-        const { rows: reply_rows } = await c.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, rows[0].id, body, parent_id ?? null]);
+        const { rows: reply_rows } = await c.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, rows[0].post.id, body, parent_id ?? null]);
 
         if (!parent_id || parent_id === null) {
             await c.query(`UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1`, [rows[0].id]);
@@ -37,7 +44,7 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
             await c.query(`UPDATE replies SET replies_count = replies_count + 1 WHERE id = $1`, [parent_id]);
         }
 
-        return {reply: reply_rows[0], post: rows[0]};
+        return {reply: {...reply_rows[0], author: rows[0].author}, post: rows[0].post};
     }, { client });
 
     if (!result) throw new DatabaseError('Error creating reply');
