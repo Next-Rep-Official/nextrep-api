@@ -13,8 +13,9 @@ import rateLimit from 'express-rate-limit';
 import { initTables } from './storage/database/helpers/tables.js';
 import config from '../config.js';
 
-
-import './websockets/server.js';
+import http from 'http';
+import { WebSocketServer } from 'ws';
+import { initWebSocket } from './websockets/server.js';
 
 // ======== CREATE APP ======== //
 
@@ -60,6 +61,11 @@ app.use('/assets', assets);
 
 // ======== START SERVER ======== //
 
-app.listen(3000, () => {
+const server = http.createServer(app);
+
+const wss = new WebSocketServer({ server, path: '/ws' });
+initWebSocket(wss);
+
+server.listen(3000, () => {
     console.log(`✅ Server is running on port ${3000}`);
 });
