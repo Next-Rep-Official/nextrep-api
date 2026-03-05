@@ -25,6 +25,12 @@ export function initWebSocket(wss) {
                     case 'reply':
                         await joinChannel(`reply_${data.reply_id}`, ws, { token: data.token });
                         break;
+                    case 'leave_post':
+                        leaveChannel(`post_${data.post_id}`, ws);
+                        break;
+                    case 'leave_reply':
+                        leaveChannel(`reply_${data.reply_id}`, ws);
+                        break;
                 }
             } catch (err) {
                 console.log('❌ Error parsing message:', err.message);
