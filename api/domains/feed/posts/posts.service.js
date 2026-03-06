@@ -7,7 +7,7 @@ import { ValidationError, BadRequestError } from '../../../util/errors.js';
 import { validateType } from '../../../util/validation.js';
 import { addAsset, removeAsset } from '../../misc/assets/assets.service.js';
 import { DatabaseError } from '../../../util/errors.js';
-import { getAttachmentsForPost, deletePostById } from './posts.queries.js';
+import { getAttachmentsForPost, deletePostById, unlikePostById } from './posts.queries.js';
 import { runTransaction } from '../../../storage/database/helpers/transaction.js';
 // ======== CREATE POSTS ======== //
 
@@ -278,6 +278,22 @@ export async function deletePost(user_id, post_id) {
             return new CustomResponse(err.status, err.message).get();
         }
 
+        return new CustomResponse(500, 'Internal server error').get();
+    }
+}
+
+export async function unlikePost(user_id, post_id) {
+    try {
+        validateType(user_id, 'number', 'User ID');
+        validateType(post_id, 'number', 'Post ID');
+
+        const result = await unlikePostById(user_id, post_id);
+
+        return new CustomResponse(200, 'Post unliked successfully!', { post: result }).get();
+    } catch (err) {
+        if (err.code < 0) {
+            return new CustomResponse(err.status, err.message).get();
+        }
         return new CustomResponse(500, 'Internal server error').get();
     }
 }

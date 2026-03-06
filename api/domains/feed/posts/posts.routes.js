@@ -129,4 +129,16 @@ router.delete('/:post_id', requireAuth, async (req, res) => {
     }
 });
 
+router.delete('/:post_id/like', requireAuth, async (req, res) => {
+    const post_id = Number(req.params.post_id);
+    const user_id = req.user.id;
+
+    try {
+        const response = await unlikePost(user_id, post_id);
+        res.status(response.status).json(response.body);
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
 export default router;

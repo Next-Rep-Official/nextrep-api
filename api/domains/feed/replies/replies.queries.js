@@ -20,7 +20,7 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
                 'display_name', pr.display_name,
                 'profile_picture', pr.profile_picture,
                 'pronouns', pr.pronouns
-            ) AS author
+            ) AS author WHERE (u.visibility = 'public' OR p.author_id = $3)
             FROM posts p
             JOIN users u ON u.id = $3
             JOIN profiles pr ON pr.user_id = u.id
@@ -96,7 +96,7 @@ export async function getAllRepliesFromPost(post_id, { user_id = -1, client = po
             'username', u.username,
             'profile_picture', pr.profile_picture,
             'pronouns', pr.pronouns
-        ) AS author
+        ) AS author WHERE (u.visibility = 'public' OR p.author_id = $3)
         FROM replies r
         JOIN posts p ON p.id = r.post_id
         JOIN users u ON u.id = r.author_id
@@ -119,7 +119,7 @@ export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = 
             'username', u.username,
             'profile_picture', pr.profile_picture,
             'pronouns', pr.pronouns
-        ) AS author
+        ) AS author WHERE (u.visibility = 'public' OR p.author_id = $3)
         FROM replies r
         JOIN posts p ON p.id = r.post_id
         JOIN users u ON u.id = r.author_id
