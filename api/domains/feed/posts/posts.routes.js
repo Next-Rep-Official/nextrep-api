@@ -4,7 +4,7 @@
 import { Router } from 'express';
 
 import { requireAuth, acceptAuth } from '../../../util/middleware.js';
-import { createPost, getPosts, getPost, searchPosts, likePost, getPostsByUser } from './posts.service.js';
+import { createPost, getPosts, getPost, searchPosts, likePost, unlikePost, getPostsByUser } from './posts.service.js';
 import { replyToPost, getRepliesFromPost } from '../replies/replies.service.js';
 import { getAttachments, deletePost} from './posts.service.js';
 import multer from 'multer';
