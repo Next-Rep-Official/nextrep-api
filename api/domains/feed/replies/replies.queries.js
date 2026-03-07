@@ -44,7 +44,10 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
             await c.query(`UPDATE replies SET replies_count = replies_count + 1 WHERE id = $1`, [parent_id]);
         }
 
-        return {reply: {...reply_rows[0], author: rows[0].author}, post: rows[0].post};
+        return {reply: {
+            ...reply_rows[0], 
+            author: rows[0].post.visibility === 'public' || rows[0].post.author_id === user_id ? rows[0].post.author : null
+        }, post: rows[0].post};
     }, { client });
 
     if (!result) throw new DatabaseError('Error creating reply');
