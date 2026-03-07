@@ -66,12 +66,15 @@ export async function getPostById(post_id, { user_id = -1, client = pool } = {})
     const { rows } = await (client ?? pool).query(
         `
         SELECT p.*,
-               json_build_object(
-                   'display_name', pr.display_name,
-                   'username', u.username,
-                   'profile_picture', pr.profile_picture,
-                   'pronouns', pr.pronouns
-               ) AS author,
+               CASE WHEN u.visibility = 'public' OR p.author_id = $2
+                   THEN json_build_object(
+                       'display_name', pr.display_name,
+                       'username', u.username,
+                       'profile_picture', pr.profile_picture,
+                       'pronouns', pr.pronouns
+                   )
+                   ELSE NULL
+               END AS author,
                (
                    SELECT COALESCE(
                        json_agg(json_build_object(
@@ -116,12 +119,15 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
     const query = `
         SELECT p.*,
                ts_rank(p.document, to_tsquery('english', $1)) AS rank,
-               json_build_object(
-                   'display_name', pr.display_name,
-                   'username', u.username,
-                   'profile_picture', pr.profile_picture,
-                   'pronouns', pr.pronouns
-               ) AS author,
+               CASE WHEN u.visibility = 'public' OR p.author_id = $2
+                   THEN json_build_object(
+                       'display_name', pr.display_name,
+                       'username', u.username,
+                       'profile_picture', pr.profile_picture,
+                       'pronouns', pr.pronouns
+                   )
+                   ELSE NULL
+               END AS author,
                (
                    SELECT COALESCE(
                        json_agg(json_build_object(
@@ -165,12 +171,15 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
     const { rows } = await (client ?? pool).query(
         `
             SELECT p.*,
-                   json_build_object(
-                       'display_name', pr.display_name,
-                       'username', u.username,
-                       'profile_picture', pr.profile_picture,
-                       'pronouns', pr.pronouns
-                   ) AS author,
+                   CASE WHEN u.visibility = 'public' OR p.author_id = $1
+                       THEN json_build_object(
+                           'display_name', pr.display_name,
+                           'username', u.username,
+                           'profile_picture', pr.profile_picture,
+                           'pronouns', pr.pronouns
+                       )
+                       ELSE NULL
+                   END AS author,
                    (
                        SELECT COALESCE(
                            json_agg(json_build_object(
@@ -210,12 +219,15 @@ export async function getPostsByAuthorId(author_id, { user_id = -1, order = 'des
     
     const { rows } = await (client ?? pool).query(
         `SELECT p.*,
-               json_build_object(
-                   'display_name', pr.display_name,
-                   'username', u.username,
-                   'profile_picture', pr.profile_picture,
-                   'pronouns', pr.pronouns
-               ) AS author,
+               CASE WHEN u.visibility = 'public' OR p.author_id = $2
+                   THEN json_build_object(
+                       'display_name', pr.display_name,
+                       'username', u.username,
+                       'profile_picture', pr.profile_picture,
+                       'pronouns', pr.pronouns
+                   )
+                   ELSE NULL
+               END AS author,
                (
                    SELECT COALESCE(
                        json_agg(json_build_object(

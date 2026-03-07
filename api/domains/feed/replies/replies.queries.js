@@ -15,12 +15,13 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
     const result = await runTransaction(async (c) => {
         const { rows } = await c.query(
-            `SELECT p.* as post, json_build_object(
-                'username', u.username,
-                'display_name', pr.display_name,
-                'profile_picture', pr.profile_picture,
-                'pronouns', pr.pronouns
-            ) AS author
+            `SELECT p.*,
+                json_build_object(
+                    'username', u.username,
+                    'display_name', pr.display_name,
+                    'profile_picture', pr.profile_picture,
+                    'pronouns', pr.pronouns
+                ) AS author
             FROM posts p
             JOIN users u ON u.id = $3
             JOIN profiles pr ON pr.user_id = u.id
@@ -36,7 +37,7 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
         if (rows.length === 0) throw new NotFoundError('Post or parent reply not found');
 
-        const { rows: reply_rows } = await c.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, rows[0].post.id, body, parent_id ?? null]);
+        const { rows: reply_rows } = await c.query('INSERT INTO replies(author_id, post_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, rows[0].id, body, parent_id ?? null]);
 
         if (!parent_id || parent_id === null) {
             await c.query(`UPDATE posts SET replies_count = replies_count + 1 WHERE id = $1`, [rows[0].id]);
@@ -46,8 +47,8 @@ export async function addReply(user_id, body, {post_id = null, parent_id = null,
 
         return {reply: {
             ...reply_rows[0], 
-            author: rows[0].post.visibility === 'public' || rows[0].post.author_id === user_id ? rows[0].post.author : null
-        }, post: rows[0].post};
+            author: rows[0].author
+        }, post: rows[0]};
     }, { client });
 
     if (!result) throw new DatabaseError('Error creating reply');
@@ -94,12 +95,16 @@ export async function likeReplyById(user_id, reply_id, { client = pool } = {}) {
  */
 export async function getAllRepliesFromPost(post_id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT r.*, json_build_object(
-            'display_name', pr.display_name,
-            'username', u.username,
-            'profile_picture', pr.profile_picture,
-            'pronouns', pr.pronouns
-        ) AS author
+        SELECT r.*,
+            CASE WHEN u.visibility = 'public' OR r.author_id = $2
+                THEN json_build_object(
+                    'display_name', pr.display_name,
+                    'username', u.username,
+                    'profile_picture', pr.profile_picture,
+                    'pronouns', pr.pronouns
+                )
+                ELSE NULL
+            END AS author
         FROM replies r
         JOIN posts p ON p.id = r.post_id
         JOIN users u ON u.id = r.author_id
@@ -117,12 +122,16 @@ export async function getAllRepliesFromPost(post_id, { user_id = -1, client = po
  */
 export async function getAllRepliesFromReply(reply_id, { user_id = -1, client = pool } = {}) {
     const { rows } = await (client ?? pool).query(`
-        SELECT r.*, json_build_object(
-            'display_name', pr.display_name,
-            'username', u.username,
-            'profile_picture', pr.profile_picture,
-            'pronouns', pr.pronouns
-        ) AS author WHERE (u.visibility = 'public' OR p.author_id = $3)
+        SELECT r.*,
+            CASE WHEN u.visibility = 'public' OR r.author_id = $2
+                THEN json_build_object(
+                    'display_name', pr.display_name,
+                    'username', u.username,
+                    'profile_picture', pr.profile_picture,
+                    'pronouns', pr.pronouns
+                )
+                ELSE NULL
+            END AS author
         FROM replies r
         JOIN posts p ON p.id = r.post_id
         JOIN users u ON u.id = r.author_id
