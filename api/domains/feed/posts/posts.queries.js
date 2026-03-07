@@ -121,7 +121,7 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
                    'username', u.username,
                    'profile_picture', pr.profile_picture,
                    'pronouns', pr.pronouns
-               ) AS author WHERE u.visibility = 'public' OR p.author_id = $1,
+               ) AS author,
                (
                    SELECT COALESCE(
                        json_agg(json_build_object(
@@ -134,7 +134,7 @@ export async function getPostsBySearchTerm(search_term, { user_id = -1, limit = 
                    )
                    FROM post_attachments pa
                    JOIN assets a ON a.id = pa.asset_id
-                   WHERE pa.post_id = p.id AND (u.visibility = 'public' OR p.author_id = $1)
+                   WHERE pa.post_id = p.id
                ) AS attachments
         FROM posts p
         JOIN users u ON u.id = p.author_id
@@ -170,7 +170,7 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
                        'username', u.username,
                        'profile_picture', pr.profile_picture,
                        'pronouns', pr.pronouns
-                   ) AS author WHERE u.visibility = 'public' OR p.author_id = $1,
+                   ) AS author,
                    (
                        SELECT COALESCE(
                            json_agg(json_build_object(
@@ -183,7 +183,7 @@ export async function getPostsByOrder(order, { user_id = -1, limit = 20, client 
                        )
                        FROM post_attachments pa
                        JOIN assets a ON a.id = pa.asset_id
-                       WHERE pa.post_id = p.id AND (u.visibility = 'public' OR p.author_id = $1)
+                       WHERE pa.post_id = p.id
                    ) AS attachments
             FROM posts p
             JOIN users u ON u.id = p.author_id
@@ -215,7 +215,7 @@ export async function getPostsByAuthorId(author_id, { user_id = -1, order = 'des
                    'username', u.username,
                    'profile_picture', pr.profile_picture,
                    'pronouns', pr.pronouns
-               ) AS author WHERE u.visibility = 'public' OR p.author_id = $1,
+               ) AS author,
                (
                    SELECT COALESCE(
                        json_agg(json_build_object(
@@ -228,7 +228,7 @@ export async function getPostsByAuthorId(author_id, { user_id = -1, order = 'des
                    )
                    FROM post_attachments pa
                    JOIN assets a ON a.id = pa.asset_id
-                   WHERE pa.post_id = p.id AND (u.visibility = 'public' or p.author_id = $2),
+                   WHERE pa.post_id = p.id
                ) AS attachments
          FROM posts p
         JOIN users u ON u.id = p.author_id
@@ -281,7 +281,7 @@ export async function deletePostById(user_id, post_id, { client = pool } = {}) {
  * Unlikes a post by it's id-- removes it from the database and decrements the likes count
  */
 export async function unlikePostById(user_id, post_id, { client = pool } = {}) {
-    runTransaction(async (c) => {
+    const result = await runTransaction(async (c) => {
         const { rows } = await c.query('DELETE FROM likes WHERE user_id = $1 AND target_id = $2 AND target_type = $3 RETURNING *', [user_id, post_id, 'post']);
 
         if (rows.length === 0) throw new NotFoundError('Like not found');
